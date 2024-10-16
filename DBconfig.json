@@ -1,0 +1,7 @@
+{
+    "dbpath" : "./storage",
+    "pagesize" : "8",
+    "dm_maxfilesize" : "40",
+    "bm_buffercount" : "3",
+    "bm_policy" : ["LRU", "MRU"]
+}
