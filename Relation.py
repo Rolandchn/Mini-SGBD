@@ -1,6 +1,6 @@
 from typing import List
 
-from Column import Column
+import Column
 
 
 class Relation:
@@ -8,6 +8,6 @@ class Relation:
         self.name = name
         self.num_column = num_column
         
-        self.columns: List[Column] = []
+        self.columns: tuple[Column.ColumnType] = tuple()
     
     
