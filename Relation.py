@@ -6,11 +6,11 @@ from Record import Record
 
 
 class Relation:
-    def __init__(self, name: str, num_column: int):
+    def __init__(self, name: str, nb_column: int):
         self.name = name
-        self.num_column = num_column
+        self.nb_column = nb_column
         
-        self.columns: tuple[Column.ColumnType] = tuple()
+        self.columns: tuple[Column.ColumnInfo] = tuple()
     
 
     def writeRecordToBuffer(record: Record, buff: Buffer, pos: int) -> int:
