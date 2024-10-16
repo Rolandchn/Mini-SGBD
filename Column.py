@@ -13,9 +13,9 @@ class ColumnType(enum.Enum):
 
 
 @dataclass
-class Column:
+class ColumnInfo:
     name: str
-    type: type
+    type: ColumnType
 
 
 
@@ -23,5 +23,5 @@ class Column:
 
 
 if __name__ == "__main__":
-    c = Column("test", PageId)
+    c = ColumnInfo("test", PageId)
     print(c)
