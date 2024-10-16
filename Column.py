@@ -1,15 +1,15 @@
 from dataclasses import dataclass
-from enum import Enum, auto
 
+import enum
 
 from PageId import PageId
 
 
-class ColumnType(Enum):
-    INT = auto()
-    REAL = auto()
-    CHAR = auto()
-    VALCHAR = auto()    
+class ColumnType(enum.Enum):
+    INT = enum.auto()
+    REAL = enum.auto()
+    CHAR = enum.auto()
+    VALCHAR = enum.auto()    
 
 
 @dataclass
