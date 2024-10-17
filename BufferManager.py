@@ -1,3 +1,5 @@
+from typing import List
+
 from Buffer import Buffer
 
 from PageId import PageId
@@ -10,7 +12,7 @@ class BufferManager:
     def __init__(self, config:DBconfig, disk:DiskManager):
         self.config = config
         self.disk = disk
-        self.used_buffers = []
+        self.used_buffers: List[Buffer] = []
 
         self.buffers = [Buffer() for i in range(config.bm_buffercount)]
         self.CurrentReplacementPolicy = config.bm_policy[0] #LRU default 
@@ -99,14 +101,15 @@ class BufferManager:
 
 
     def FlushBuffers(self):
-        for buffer in self.buffers:
-            if buffer.dirty_flag == 1:
-                ...
-        
-
+        for buffer in self.used_buffers:
+            if buffer.dirty_flag:
+                self.disk.WritePage(buffer.pageId,buffer)
+                buffer.dirty_flag = False
+            buffer.pin_count = 0
+            buffer.pageId = None
+            
 if __name__ == "__main__":
     bufferManager = BufferManager.setup("DBconfig.json")
-    
     print(bufferManager.getPage(PageId(1,2)))
     print(bufferManager.getPage(PageId(1,1)))
     print(bufferManager.getPage(PageId(1,3)))
