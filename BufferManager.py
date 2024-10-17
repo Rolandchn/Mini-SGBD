@@ -34,6 +34,9 @@ class BufferManager:
 
         # cas où il y a une page identique
         for buffer in self.buffers:
+            if buffer.pin_count != 0:
+                continue
+            
             if pageId == buffer.pageId:
                 self.used_buffers.append(buffer)
             
