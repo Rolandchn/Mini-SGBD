@@ -1,4 +1,4 @@
-
+from typing import List
 import Column
 
 from Buffer import Buffer
@@ -11,7 +11,7 @@ class Relation:
         self.nb_column = nb_column
         
         # est ce que ça doit forcément être un tuple ?
-        self.columns: tuple[Column.ColumnInfo] = tuple()
+        self.columns: List[Column.ColumnInfo] = []
     
 
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
