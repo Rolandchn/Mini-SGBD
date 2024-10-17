@@ -75,7 +75,7 @@ class BufferManager:
 
         return buffer
 
-
+    #Que faire avec les pages dont le dirty est True
     def FreePage(self, pageId:PageId):
         for buffer in self.buffers:
             if pageId == buffer.pageId:
@@ -118,3 +118,5 @@ if __name__ == "__main__":
 
 
 
+    #Que faire avec les pages dont le dirty est True
+    #Est-on sensé rajouter un read a partir du disque dans le getPage
