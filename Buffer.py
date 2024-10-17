@@ -5,8 +5,7 @@ from PageId import PageId
 
 
 @dataclass
-class Buffer:
-    byteBuffer: ByteBuffer = ByteBuffer()
+class Buffer(ByteBuffer):
     pageId: PageId = None
 
     dirty_flag: bool = False
