@@ -2,6 +2,6 @@
 
 class Record:
     def __init__(self, values: list):
-        self.values = list(values)
+        self.values = values
 
-        # ou self.value1, self.value2, ... ?
+        # ou self.value1, self.value2, ... 
