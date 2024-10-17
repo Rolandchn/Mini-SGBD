@@ -1,6 +1,6 @@
 from DBconfig import DBconfig
 from PageId import PageId
-from ByteBuffer import ByteBuffer
+from Buffer import Buffer
 
 import json
 
@@ -34,7 +34,7 @@ class DiskManager:
         return self.current_pageId
 
 
-    def ReadPage(self, pageId:PageId, buffer:ByteBuffer):
+    def ReadPage(self, pageId:PageId, buffer:Buffer):
         filename = f"F{pageId.fileIdx}.rsdb"
         pagebyte = self.config.pagesize * pageId.pageIdx
 
@@ -49,7 +49,7 @@ class DiskManager:
             buffer.from_bytes(data)
             
 
-    def WritePage(self, pageId:PageId, buffer:ByteBuffer):
+    def WritePage(self, pageId:PageId, buffer:Buffer):
         filename = f"F{pageId.fileIdx}.rsdb"
         
         pagebyte = self.config.pagesize * pageId.pageIdx
