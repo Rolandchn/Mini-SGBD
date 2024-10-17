@@ -99,9 +99,9 @@ class BufferManager:
 
 
     def FlushBuffers(self):
-        for buffer in self.buffers:
+        for buffer in self.used_buffers:
             if buffer.dirty_flag == 1:
-                ...
+                buffer.disk.WritePage(buffer.pageId,buffer)
         
 
 if __name__ == "__main__":
