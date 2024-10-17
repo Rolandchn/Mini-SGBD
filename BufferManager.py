@@ -107,7 +107,7 @@ class BufferManager:
                 buffer.dirty_flag = False
             buffer.pin_count = 0
             buffer.pageId = None
-            
+            #azer
 if __name__ == "__main__":
     bufferManager = BufferManager.setup("DBconfig.json")
     print(bufferManager.getPage(PageId(1,2)))
