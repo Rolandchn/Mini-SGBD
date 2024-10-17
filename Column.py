@@ -4,12 +4,20 @@ import enum
 
 from PageId import PageId
 
-# pas nécessaire, le type d'une valeur peut être vérifié par type(var)
+
 class ColumnType(enum.Enum):
     INT = enum.auto()
     REAL = enum.auto()
-    CHAR = enum.auto()
-    VALCHAR = enum.auto()    
+
+@dataclass
+class Char:
+    size: int
+    
+
+@dataclass
+class VarChar:
+    max_size: int
+
 
 
 @dataclass
