@@ -1,7 +1,7 @@
 
 
 class Record:
-    def __init__(self, values: tuple[str]):
-        self.values = list(values)
+    def __init__(self, values: list):
+        self.values = values
 
-        # ou self.value1, self.value2, ... ?
+        # ou self.value1, self.value2, ... 
