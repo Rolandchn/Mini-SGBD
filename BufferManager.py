@@ -75,14 +75,12 @@ class BufferManager:
 
         return buffer
 
-    #Que faire avec les pages dont le dirty est True
+
     def FreePage(self, pageId:PageId):
         for buffer in self.buffers:
             if pageId == buffer.pageId:
                 # réinitialiser les attributs de buffer
                 buffer.pageId = None
-
-                # valeur initiale ?
                 buffer.dirty_flag = False
                 buffer.pin_count -= 1
 
