@@ -51,8 +51,9 @@ class BufferManager:
         # cas où il y avait une page libre
         if free_buffer is not None:
             free_buffer.pageId = pageId
-            self.used_buffers.append(free_buffer)
 
+            self.used_buffers.append(free_buffer)
+            self.disk.ReadPage(pageId,free_buffer)
             return free_buffer
 
         # pour garder l'ordre d'utilisation ?
@@ -72,7 +73,7 @@ class BufferManager:
             buffer = self.used_buffers.pop()
             
         buffer.pageId = pageId
-
+        self.disk.ReadPage(pageId,buffer)
         return buffer
 
     #Que faire avec les pages dont le dirty est True
@@ -118,5 +119,4 @@ if __name__ == "__main__":
 
 
 
-    #Que faire avec les pages dont le dirty est True
     #Est-on sensé rajouter un read a partir du disque dans le getPage
