@@ -18,17 +18,20 @@ class Relation:
             buff.set_position(pos)
 
             for index, stuff in enumerate(record.values):
-                # cas où c'est un float
-                if self.columns[index] == Column.ColumnType.INT:
-                    buff.put_float(float(stuff))
+                data = self.columns[index]
 
-                # cas où c'est un int
-                elif self.columns[index] == Column.ColumnType.REAL:
-                    buff.put_int(int(stuff))
+                if isinstance(data, Column.Number):
+                    if type(data.value) == float:
+                        buff.put_float(float(stuff))
+                    
+                    else:
+                        buff.put_int(int(stuff))
 
-                # cas où c'est un pur string
-                elif isinstance(self.columns[index], Column.Char):
-                    buff.put_char(stuff)
+                elif isinstance(data, Column.Char):
+                    if isinstance(data, Column.CharVar):
+                        pass
+                    else:
+                        buff.put_char(stuff)
 
 
         else:
@@ -37,7 +40,7 @@ class Relation:
     @staticmethod
     def has_varchar(columns):
         for stuff in columns:
-            if isinstance(stuff, Column.VarChar):
+            if isinstance(stuff, Column.CharVar):
                 return True
             
         return False
