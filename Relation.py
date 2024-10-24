@@ -26,12 +26,9 @@ class Relation:
                     
                     else:
                         buff.put_int(int(stuff))
-
+                
                 elif isinstance(data, Column.Char):
-                    if isinstance(data, Column.CharVar):
-                        pass
-                    else:
-                        buff.put_char(stuff)
+                    buff.put_char(stuff)
 
 
         else:
