@@ -3,17 +3,17 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Type:
+class ColumnType:
     size: int
 
 
 @dataclass
-class Number(Type):
+class Number(ColumnType):
     value: int | float
 
 
 @dataclass
-class Char(Type):
+class Char(ColumnType):
     value: str
 
 
@@ -25,7 +25,7 @@ class CharVar(Char):
 @dataclass
 class ColumnInfo:
     name: str
-    type: Type
+    type: ColumnType
 
 
 
