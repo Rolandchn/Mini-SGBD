@@ -76,6 +76,67 @@ class Relation:
                     pos_buffer = buff.__pos
 
 
+    def readFromBuffer(self, record, buff, pos) -> int:
+        buff.set_position(pos)
+        
+        if not self.has_varchar(self.columns):
+            for index, value in enumerate(record.values):
+                data = self.columns[index]
+
+                if isinstance(data, Column.Number):
+                    if type(data.value) == float:
+                        buff.read_float(float(value))
+                    
+                    else:
+                        buff.read_int(int(value))
+                
+                elif isinstance(data, Column.Char):
+                    for i in range(data.size):
+                        buff.read_char(value[i])
+
+        else:
+            pos_buffer = buff.read_int()
+            
+            buff.put_int(pos_buffer)
+            init_pos = buff.__pos
+
+            for index, value in enumerate(record.values):
+                buff.set_position(pos_buffer)
+
+                data = self.columns[index]
+
+                if isinstance(data, Column.Number):
+                    if type(data.value) == float:
+                        buff.read_float(float(value))
+                    
+                    else:
+                        buff.read_int(int(value))
+
+                    buff.set_position(init_pos)
+                    buff.read_int(pos_buffer + 4)
+
+                    pos_buffer = buff.__pos + 4
+
+                
+                elif isinstance(data, Column.Char):
+                    for i in range(data.size):
+                        buff.put_char(value[i])
+
+                    buff.set_position(init_pos)
+                    buff.read_int(pos_buffer + data.size)
+
+                    pos_buffer = buff.__pos
+                
+                else:
+                    for i in range(data.size):
+                        buff.read_char(value[i])
+
+                    buff.set_position(init_pos)
+                    buff.read_int(pos_buffer + data.size)
+
+                    pos_buffer = buff.__pos
+
+
     @staticmethod
     def has_varchar(columns):
         for stuff in columns:
