@@ -33,5 +33,14 @@ class ColumnInfo:
 
 
 if __name__ == "__main__":
-    c = CharVar(12, "hello", 20)
+    c = Char(12, "hello")
+    cv = CharVar(12, "hello", 20)
+    n = Number(12, 25)
+    f = Number(12, 2.5)
+
     print(c)
+    print(cv)
+    print(n)
+    print(f)
+
+    print(isinstance(c, CharVar))
