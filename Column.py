@@ -1,29 +1,32 @@
 from dataclasses import dataclass
 
-import enum
-
 from PageId import PageId
 
 
-class ColumnType(enum.Enum):
-    INT = enum.auto()
-    REAL = enum.auto()
+@dataclass
+class Type:
+    size: int
 
-    @dataclass
-    class Char:
-        size: int
-        
 
-    @dataclass
-    class VarChar:
-        max_size: int
+@dataclass
+class Number(Type):
+    value: int | float
 
+
+@dataclass
+class Char:
+    value: str
+
+
+@dataclass
+class CharVar(Char):
+    size_var: int
 
 
 @dataclass
 class ColumnInfo:
     name: str
-    type: ColumnType
+    type: Type
 
 
 
