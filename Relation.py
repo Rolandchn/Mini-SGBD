@@ -14,8 +14,9 @@ class Relation:
     
 
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
+        buff.set_position(pos)
+        
         if not self.has_varchar(self.columns):
-            buff.set_position(pos)
 
             for index, value in enumerate(record.values):
                 data = self.columns[index]
