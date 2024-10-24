@@ -17,19 +17,19 @@ class Relation:
         if not self.has_varchar(self.columns):
             buff.set_position(pos)
 
-            for index, stuff in enumerate(record.values):
+            for index, value in enumerate(record.values):
                 data = self.columns[index]
 
                 if isinstance(data, Column.Number):
                     if type(data.value) == float:
-                        buff.put_float(float(stuff))
+                        buff.put_float(float(value))
                     
                     else:
-                        buff.put_int(int(stuff))
+                        buff.put_int(int(value))
                 
                 elif isinstance(data, Column.Char):
-                    buff.put_char(stuff)
-
+                    for i in range(data.size):
+                        buff.put_char(value[i])
 
         else:
             ...
