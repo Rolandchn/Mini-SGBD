@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from PageId import PageId
 
 
 @dataclass
@@ -14,7 +13,7 @@ class Number(Type):
 
 
 @dataclass
-class Char:
+class Char(Type):
     value: str
 
 
@@ -34,5 +33,5 @@ class ColumnInfo:
 
 
 if __name__ == "__main__":
-    c = ColumnInfo("test", PageId)
+    c = CharVar(12, "hello", 20)
     print(c)
