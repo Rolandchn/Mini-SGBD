@@ -11,7 +11,8 @@ class Buffer(ByteBuffer):
     dirty_flag: bool = False
     pin_count: int = 0
     
-    
+    def __init__(self, size=30):
+        super().__init__(size)
 
 
 if __name__ == "__main__":
