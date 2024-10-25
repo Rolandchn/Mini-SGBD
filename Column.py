@@ -2,41 +2,34 @@ from dataclasses import dataclass
 
 
 
+
 @dataclass
-class ColumnType:
+class Number:
+    size: int = 4
+
+
+@dataclass
+class Char:
     size: int
 
 
 @dataclass
-class Number(ColumnType):
-    value: int | float
-
-
-@dataclass
-class Char(ColumnType):
-    value: str
-
-
-@dataclass
-class CharVar(Char):
+class CharVar:
     size_var: int
 
 
 @dataclass
 class ColumnInfo:
     name: str
-    type: ColumnType
-
-
-
+    type: Number | Char | CharVar
 
 
 
 if __name__ == "__main__":
-    c = Char(12, "hello")
-    cv = CharVar(12, "hello", 20)
-    n = Number(12, 25)
-    f = Number(12, 2.5)
+    c = Char(20)
+    cv = CharVar(20)
+    n = Number()
+    f = Number()
 
     print(c)
     print(cv)
