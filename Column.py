@@ -20,7 +20,7 @@ class Char:
 
 @dataclass
 class CharVar:
-    size_var: int
+    size: int
 
 
 @dataclass

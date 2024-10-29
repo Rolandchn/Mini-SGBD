@@ -37,9 +37,9 @@ class Relation:
             buff.put_int(pos_buffer_value)
             pos_buffer_adress += 4
 
-            for value, value_info in zip(record.values, self.columns):
-                buff.set_position(pos_buffer_value)
+            buff.set_position(pos_buffer_value)
 
+            for value, value_info in zip(record.values, self.columns):
                 if isinstance(value_info.type, Column.Number):
                     if type(value) == float:
                         buff.put_float(float(value))
@@ -51,14 +51,14 @@ class Relation:
                     for char in value:
                         buff.put_char(char)
 
-                else:
-                    for char in value:
-                        buff.put_char(char)
+                pos_buffer_value = pos_buffer_value + value_info.type.size
 
                 buff.set_position(pos_buffer_adress)
-                buff.put_int(pos_buffer_value + value_info.type.size_var)
+                buff.put_int(pos_buffer_value)
+                pos_buffer_adress += 4
 
-                pos_buffer_value = buff.__pos
+                buff.set_position(pos_buffer_value)
+
 
 
     def readFromBuffer(self, record, buff, pos) -> int:
