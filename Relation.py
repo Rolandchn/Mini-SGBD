@@ -47,29 +47,18 @@ class Relation:
                     else:
                         buff.put_int(int(value))
 
-                    buff.set_position(pos_buffer_adress)
-                    buff.put_int(pos_buffer_value + 4)
-
-                    pos_buffer_value += 4
-
-                
                 elif isinstance(value_info.type, Column.Char):
                     for char in value:
                         buff.put_char(char)
 
-                    buff.set_position(pos_buffer_adress)
-                    buff.put_int(pos_buffer_value + value_info.size)
-
-                    pos_buffer_value = buff.__pos
-                
                 else:
-                    for i in range(value_info.size):
-                        buff.put_char(value[i])
+                    for char in value:
+                        buff.put_char(char)
 
-                    buff.set_position(pos_buffer_adress)
-                    buff.put_int(pos_buffer_value + value_info.size)
+                buff.set_position(pos_buffer_adress)
+                buff.put_int(pos_buffer_value + value_info.type.size_var)
 
-                    pos_buffer_value = buff.__pos
+                pos_buffer_value = buff.__pos
 
 
     def readFromBuffer(self, record, buff, pos) -> int:
