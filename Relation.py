@@ -17,19 +17,17 @@ class Relation:
         buff.set_position(pos)
         
         if not self.has_varchar(self.columns):
-
-            for index, value in enumerate(record.values):
-                data = self.columns[index]
-
-                if isinstance(data, Column.Number):
-                    if type(data.value) == float:
+            # record = single row of values 
+            for value, value_info in zip(record.values, self.columns):
+                if isinstance(value_info.type, Column.Number):
+                    if type(value) == float:
                         buff.put_float(float(value))
                     
                     else:
                         buff.put_int(int(value))
                 
-                elif isinstance(data, Column.Char):
-                    for i in range(data.size):
+                elif isinstance(value_info.type, Column.Char):
+                    for i in range(len(value)):
                         buff.put_char(value[i])
 
         else:
@@ -42,10 +40,10 @@ class Relation:
             for index, value in enumerate(record.values):
                 buff.set_position(pos_buffer)
 
-                data = self.columns[index]
+                value_info = self.columns[index]
 
-                if isinstance(data, Column.Number):
-                    if type(data.value) == float:
+                if isinstance(value_info, Column.Number):
+                    if type(value_info.value) == float:
                         buff.put_float(float(value))
                     
                     else:
@@ -57,21 +55,21 @@ class Relation:
                     pos_buffer = buff.__pos + 4
 
                 
-                elif isinstance(data, Column.Char):
-                    for i in range(data.size):
+                elif isinstance(value_info, Column.Char):
+                    for i in range(value_info.size):
                         buff.put_char(value[i])
 
                     buff.set_position(init_pos)
-                    buff.put_int(pos_buffer + data.size)
+                    buff.put_int(pos_buffer + value_info.size)
 
                     pos_buffer = buff.__pos
                 
                 else:
-                    for i in range(data.size):
+                    for i in range(value_info.size):
                         buff.put_char(value[i])
 
                     buff.set_position(init_pos)
-                    buff.put_int(pos_buffer + data.size)
+                    buff.put_int(pos_buffer + value_info.size)
 
                     pos_buffer = buff.__pos
 
