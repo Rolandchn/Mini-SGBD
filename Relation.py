@@ -14,41 +14,46 @@ class Relation:
     
 
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
-        buff.set_position(pos)
-        
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
-            pos_buffer_adress = buff.__pos
-            pos_buffer_value = buff.__pos + 4 * (self.nb_column + 1)
-            
-            buff.put_int(pos_buffer_value)
-            pos_buffer_adress += 4
+            self.put_offset_to_buffer(buff.__pos + 4 * (self.nb_column + 1), pos, buff)
 
-            buff.set_position(pos_buffer_value)
+            adress_pos = pos + 4
+        
+        else:
+            buff.set_position(pos)
 
         # record = single row of values 
         for value, value_info in zip(record.values, self.columns):
-            if isinstance(value_info.type, Column.Number):
-                if type(value) == float:
-                    buff.put_float(float(value))
-                
-                else:
-                    buff.put_int(int(value))
-
-            elif isinstance(value_info.type, Column.Char):
-                for char in value:
-                    buff.put_char(char)
+            self.put_value_to_buffer(value, value_info, buff)
 
             if has_varchar:
-                pos_buffer_value += value_info.type.size
+                self.put_offset_to_buffer(buff.__pos, adress_pos, buff)
 
-                buff.set_position(pos_buffer_adress)
-                buff.put_int(pos_buffer_value)
-                pos_buffer_adress += 4
+                adress_pos += 4
 
-                buff.set_position(pos_buffer_value)
 
+    @staticmethod
+    def put_offset_to_buffer(value_pos, adress_pos, buff: Buffer):
+        buff.set_position(adress_pos)
+        buff.put_int(value_pos)
+
+        buff.set_position(value_pos)
+
+
+    @staticmethod
+    def put_value_to_buffer(value, value_info: Column.ColumnInfo, buff: Buffer):
+        if isinstance(value_info.type, Column.Number):
+            if type(value) == float:
+                buff.put_float(float(value))
+            
+            else:
+                buff.put_int(int(value))
+
+        elif isinstance(value_info.type, Column.Char):
+            for char in value:
+                buff.put_char(char)
 
 
     def readFromBuffer(self, record, buff, pos) -> int:
@@ -70,13 +75,13 @@ class Relation:
                         buff.read_char(value[i])
 
         else:
-            pos_buffer_value = buff.read_int()
+            value_pos = buff.read_int()
             
-            buff.put_int(pos_buffer_value)
-            pos_buffer_adress = buff.__pos
+            buff.put_int(value_pos)
+            adress_pos = buff.__pos
 
             for index, value in enumerate(record.values):
-                buff.set_position(pos_buffer_value)
+                buff.set_position(value_pos)
 
                 data = self.columns[index]
 
@@ -87,29 +92,29 @@ class Relation:
                     else:
                         buff.read_int(int(value))
 
-                    buff.set_position(pos_buffer_adress)
-                    buff.read_int(pos_buffer_value + 4)
+                    buff.set_position(adress_pos)
+                    buff.read_int(value_pos + 4)
 
-                    pos_buffer_value = buff.__pos + 4
+                    value_pos = buff.__pos + 4
 
                 
                 elif isinstance(data, Column.Char):
                     for i in range(data.size):
                         buff.put_char(value[i])
 
-                    buff.set_position(pos_buffer_adress)
-                    buff.read_int(pos_buffer_value + data.size)
+                    buff.set_position(adress_pos)
+                    buff.read_int(value_pos + data.size)
 
-                    pos_buffer_value = buff.__pos
+                    value_pos = buff.__pos
                 
                 else:
                     for i in range(data.size):
                         buff.read_char(value[i])
 
-                    buff.set_position(pos_buffer_adress)
-                    buff.read_int(pos_buffer_value + data.size)
+                    buff.set_position(adress_pos)
+                    buff.read_int(value_pos + data.size)
 
-                    pos_buffer_value = buff.__pos
+                    value_pos = buff.__pos
 
 
     @staticmethod
