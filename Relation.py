@@ -16,21 +16,9 @@ class Relation:
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         buff.set_position(pos)
         
-        if not self.has_varchar(self.columns):
-            # record = single row of values 
-            for value, value_info in zip(record.values, self.columns):
-                if isinstance(value_info.type, Column.Number):
-                    if type(value) == float:
-                        buff.put_float(float(value))
-                    
-                    else:
-                        buff.put_int(int(value))
-                
-                elif isinstance(value_info.type, Column.Char):
-                    for char in value:
-                        buff.put_char(char)
+        has_varchar = self.has_varchar(self.columns)
 
-        else:
+        if has_varchar:
             pos_buffer_adress = buff.__pos
             pos_buffer_value = buff.__pos + 4 * (self.nb_column + 1)
             
@@ -39,19 +27,21 @@ class Relation:
 
             buff.set_position(pos_buffer_value)
 
-            for value, value_info in zip(record.values, self.columns):
-                if isinstance(value_info.type, Column.Number):
-                    if type(value) == float:
-                        buff.put_float(float(value))
-                    
-                    else:
-                        buff.put_int(int(value))
+        # record = single row of values 
+        for value, value_info in zip(record.values, self.columns):
+            if isinstance(value_info.type, Column.Number):
+                if type(value) == float:
+                    buff.put_float(float(value))
+                
+                else:
+                    buff.put_int(int(value))
 
-                elif isinstance(value_info.type, Column.Char):
-                    for char in value:
-                        buff.put_char(char)
+            elif isinstance(value_info.type, Column.Char):
+                for char in value:
+                    buff.put_char(char)
 
-                pos_buffer_value = pos_buffer_value + value_info.type.size
+            if has_varchar:
+                pos_buffer_value += value_info.type.size
 
                 buff.set_position(pos_buffer_adress)
                 buff.put_int(pos_buffer_value)
