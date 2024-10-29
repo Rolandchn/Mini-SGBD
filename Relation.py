@@ -18,7 +18,6 @@ class Relation:
 
         if has_varchar:
             self.put_offset_to_buffer(buff.__pos + 4 * (self.nb_column + 1), pos, buff)
-
             adress_pos = pos + 4
         
         else:
@@ -30,8 +29,9 @@ class Relation:
 
             if has_varchar:
                 self.put_offset_to_buffer(buff.__pos, adress_pos, buff)
-
                 adress_pos += 4
+        
+        return adress_pos - pos
 
 
     @staticmethod
