@@ -17,7 +17,7 @@ class Relation:
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
-            self.put_offset_to_buffer(buff.__pos + 4 * (self.nb_column + 1), pos, buff)
+            self.put_offset_to_buffer(pos, buff.__pos + 4 * (self.nb_column + 1), buff)
             adress_pos = pos + 4
         
         else:
@@ -28,14 +28,14 @@ class Relation:
             self.put_value_to_buffer(value, value_info, buff)
 
             if has_varchar:
-                self.put_offset_to_buffer(buff.__pos, adress_pos, buff)
+                self.put_offset_to_buffer(adress_pos, buff.__pos, buff)
                 adress_pos += 4
         
         return adress_pos - pos
 
 
     @staticmethod
-    def put_offset_to_buffer(value_pos, adress_pos, buff: Buffer):
+    def put_offset_to_buffer(adress_pos, value_pos, buff: Buffer):
         buff.set_position(adress_pos)
         buff.put_int(value_pos)
 
@@ -57,74 +57,62 @@ class Relation:
 
 
     def readFromBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
+        # adress_pos = adress of the index in the offset
+        # value_pos = adress of the value in the offset 
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
-            self.put_offset_to_buffer(buff.__pos + 4 * (self.nb_column + 1), pos, buff)
             adress_pos = pos + 4
+            # value_pos = buff.__pos
+            next_value_pos = self.read_offset_from_buffer(adress_pos, buff.__pos + 4 * (self.nb_column + 1), buff)
         
         else:
             buff.set_position(pos)
 
         # record = single row of values 
         for value_info in self.columns:
-            value = self.read_value_from_buffer(value_info, buff)
-
             if has_varchar:
-                self.put_offset_to_buffer(buff.__pos, adress_pos, buff)
+                record.values.append(self.read_value_from_buffer(value_info, next_value_pos - buff.__pos, buff))
+
                 adress_pos += 4
-        
-        return adress_pos - pos
-    
-    
-    def read_value_from_buffer(value_info: Column.ColumnInfo, buff: Buffer) -> int | float | str:
-        if isinstance(value_info.type, Column.Number):
-            if type(value) == float:
-                buff.read_float(float(value))
-            
-            buff.put_int(value_pos)
-            adress_pos = buff.__pos
-
-            for index, value in enumerate(record.values):
-                buff.set_position(value_pos)
-
-
-    def readFromBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
-        has_varchar = self.has_varchar(self.columns)
-
-        if has_varchar:
-            self.put_offset_to_buffer(buff.__pos + 4 * (self.nb_column + 1), pos, buff)
-            adress_pos = pos + 4
-        
-        else:
-            buff.set_position(pos)
-
-        # record = single row of values 
-        for value_info in self.columns:
-            value = self.read_value_from_buffer(value_info, buff)
-
-            if has_varchar:
-                self.put_offset_to_buffer(buff.__pos, adress_pos, buff)
-                adress_pos += 4
-        
-        return adress_pos - pos
-    
-    
-    def read_value_from_buffer(value_info: Column.ColumnInfo, buff: Buffer) -> int | float | str:
-        if isinstance(value_info.type, Column.Number):
-            buff.read_float(float(value))
+                # get the value from adress_pos, and go back to the last buffer position
+                next_value_pos = self.read_offset_from_buffer(adress_pos, buff.__pos, buff)
             
             else:
-                buff.read_int(int(value))
+                record.values.append(self.read_value_from_buffer(value_info, value_info.type.size, buff))
+    
+        if has_varchar: return next_value_pos
+        return buff.__pos - pos
+    
 
-        elif isinstance(value_info.type, Column.Char):
-            for char in value:
-                buff.read_char(char)
+    def read_value_from_buffer(value_info: Column.ColumnInfo, value_size: int, buff: Buffer)  -> int | float | str:
+        if isinstance(value_info.type, Column.Number):
+            if value_info.type == float:
+                return buff.read_float()
+    
+            return buff.read_int()
+        
+        value = ""
+
+        for i in range(value_size):
+            value += buff.read_char()
+
+        return value
+
+    
+    def read_offset_from_buffer(adress_pos, value_pos, buff: Buffer):
+        buff.set_position(adress_pos)
+        next_value_pos = buff.read_int()
+
+        buff.set_position(value_pos)
+
+        return next_value_pos
+
 
     @staticmethod
     def has_varchar(columns):
         for stuff in columns:
-            if isinstance(stuff, Column.CharVar):
+            if isinstance(stuff, Column.Char) and stuff.var:
                 return True
             
         return False
