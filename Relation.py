@@ -108,6 +108,9 @@ class Relation:
 
         return next_value_pos
 
+        elif isinstance(value_info.type, Column.Char):
+            for char in value:
+                buff.read_char(char)
 
     @staticmethod
     def has_varchar(columns):
