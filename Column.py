@@ -32,6 +32,6 @@ if __name__ == "__main__":
     n = Number(int)
     f = Number(float)
 
-    column_info = ColumnInfo("test", char)
+    column_info = ColumnInfo("test", c)
 
     print(isinstance(c, Char))
