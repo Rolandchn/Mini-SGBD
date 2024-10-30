@@ -10,30 +10,28 @@ class Base:
 
 @dataclass
 class Number:
+    type: int | float
     size: int = 4
 
 
 @dataclass
 class Char:
     size: int
-
-
-@dataclass
-class CharVar:
-    size: int
+    var: bool = False
 
 
 @dataclass
 class ColumnInfo(Base):
     name: str
-    type: Number | Char | CharVar
-
+    type: Number | Char
 
 
 if __name__ == "__main__":
-    char = Char(20)
-    number = Number()
+    c = Char(20)
+    cv = Char(20, var=True)
+    n = Number(int)
+    f = Number(float)
 
     column_info = ColumnInfo("test", char)
 
-    print(column_info)
+    print(isinstance(c, Char))
