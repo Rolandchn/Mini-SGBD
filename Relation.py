@@ -56,14 +56,31 @@ class Relation:
                 buff.put_char(char)
 
 
-    def readFromBuffer(self, record, buff, pos) -> int:
-        buff.set_position(pos)
+    def readFromBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
+        has_varchar = self.has_varchar(self.columns)
+
+        if has_varchar:
+            self.put_offset_to_buffer(buff.__pos + 4 * (self.nb_column + 1), pos, buff)
+            adress_pos = pos + 4
+        
+        else:
+            buff.set_position(pos)
+
+        # record = single row of values 
+        for value_info in self.columns:
+            value = self.read_value_from_buffer(value_info, buff)
+
+            if has_varchar:
+                self.put_offset_to_buffer(buff.__pos, adress_pos, buff)
+                adress_pos += 4
         
         return adress_pos - pos
-
-
-        else:
-            value_pos = buff.read_int()
+    
+    
+    def read_value_from_buffer(value_info: Column.ColumnInfo, buff: Buffer) -> int | float | str:
+        if isinstance(value_info.type, Column.Number):
+            if type(value) == float:
+                buff.read_float(float(value))
             
             buff.put_int(value_pos)
             adress_pos = buff.__pos
