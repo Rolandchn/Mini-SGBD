@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
 
+@dataclass
+class Base:
+    def __post_init__(self):
+        for value, value_type in self.__annotations__.items():
+            assert isinstance(getattr(self, value), value_type)
 
 
 @dataclass
@@ -16,7 +21,7 @@ class Char:
 
 
 @dataclass
-class ColumnInfo:
+class ColumnInfo(Base):
     name: str
     type: Number | Char
 
@@ -27,9 +32,6 @@ if __name__ == "__main__":
     n = Number(int)
     f = Number(float)
 
-    print(c)
-    print(cv)
-    print(n)
-    print(f)
+    column_info = ColumnInfo("test", char)
 
     print(isinstance(c, Char))
