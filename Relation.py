@@ -125,3 +125,8 @@ class Relation:
                 return True
             
         return False
+
+
+    def addDataPage(self){
+
+    }
