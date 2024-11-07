@@ -1,23 +1,26 @@
 from typing import List
 import Column
 
+from PageId import PageId
 from Buffer import Buffer
 from Record import Record
-from PageId import PageId
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 
-
 class Relation:
     def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo],
-                headerPageId: PageId, disk: DiskManager, bufferManager: BufferManager):
+                disk: DiskManager, bufferManager: BufferManager):
         self.name = name
         self.nb_column = nb_column
         self.columns = columns
 
-        self.headerPageId = headerPageId
         self.disk = disk
         self.bufferManager = bufferManager
+    
+        #init
+        self.headerPageId = disk.AllocPage()
+        buffer = self.bufferManager.getPage(self.headerPageId)
+        buffer.put_int(0)
     
 
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
@@ -127,6 +130,45 @@ class Relation:
         return False
 
 
-    def addDataPage(self){
+    def addDataPage(self):
+        dataPageId = self.disk.AllocPage()
+        buffer = self.bufferManager.getPage(dataPageId)
+        
+        n = buffer.read_int()
+        buffer.set_position(12 * n)
 
-    }
+        buffer.put_int(dataPageId.fileIdx)
+        buffer.put_int(dataPageId.pageIdx)
+        
+        m = self.disk.config.nb_slot
+        pageSize = self.disk.config.pagesize
+        buffer.put_int(pageSize - 8 * (m + 1))
+
+        buffer.set_position(0)
+        buffer.put_int(n + 1)
+
+
+    def getFreeDataPageId(self, sizeRecord):
+        buffer = self.bufferManager.getPage(self.headerPageId)
+        
+        n = buffer.read_int()
+
+        for i in range(n):
+            buffer.set_position((i + 1) * 12)
+            position = buffer.read_int()
+            
+            if position <= sizeRecord:
+                pos = position - 8
+                buffer.set_position(pos)
+
+                return PageId(buffer.read_int(), buffer.read_int())
+        
+        return None
+        
+    def writeRecordToDataPage(self, record: Record, pageId:PageId):
+        pass
+        # position début Rec M: pagesize - 4 - 4 - 8 * nb_slot
+        # position début espace disponible = somme de toutes les tailles
+
+# lorsqu'on fini avec getDataPages, on doit freePage()
+# avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
