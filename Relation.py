@@ -4,7 +4,7 @@ import Column
 from Buffer import Buffer
 from Record import Record
 
-
+from BufferManager import BufferManager
 class Relation:
     def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo]):
         self.name = name
@@ -150,3 +150,14 @@ class Relation:
 
         for column in self.columns:
             ...
+
+
+if __name__ == "__main__":
+    bufferManager = BufferManager.setup("DBconfig.json")
+    bufferManager.disk.LoadState()
+    rec = Record([5,2,'Aaa','a'])
+    it1 = Column.ColumnInfo('age',Column.Number)
+    it2 = Column.ColumnInfo('nb',Column.Number)
+    it3 = Column.ColumnInfo('chaine',Column.Char(5))
+
+    rel = Relation("Test",4,)
