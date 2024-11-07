@@ -3,14 +3,21 @@ import Column
 
 from Buffer import Buffer
 from Record import Record
+from PageId import PageId
+from DiskManager import DiskManager
+from BufferManager import BufferManager
 
 
 class Relation:
-    def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo]):
+    def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo],
+                headerPageId: PageId, disk: DiskManager, bufferManager: BufferManager):
         self.name = name
-        
         self.nb_column = nb_column
         self.columns = columns
+
+        self.headerPageId = headerPageId
+        self.disk = disk
+        self.bufferManager = bufferManager
     
 
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
