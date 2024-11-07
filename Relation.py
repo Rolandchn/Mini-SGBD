@@ -84,7 +84,8 @@ class Relation:
         if has_varchar: return next_value_pos
         return buff.__pos - pos
     
-
+    
+    @staticmethod
     def read_value_from_buffer(value_info: Column.ColumnInfo, value_size: int, buff: Buffer)  -> int | float | str:
         if isinstance(value_info.type, Column.Number):
             if value_info.type == float:
@@ -99,7 +100,8 @@ class Relation:
 
         return value
 
-    
+
+    @staticmethod
     def read_offset_from_buffer(adress_pos, value_pos, buff: Buffer):
         buff.set_position(adress_pos)
         next_value_pos = buff.read_int()
