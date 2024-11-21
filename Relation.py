@@ -24,6 +24,10 @@ class Relation:
     
 
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
+        """ 
+        Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
+        Sortie: Le nombre d'octet traité par l'écriture
+        """
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
@@ -45,7 +49,10 @@ class Relation:
 
 
     @staticmethod
-    def put_offset_to_buffer(adress_pos, value_pos, buff: Buffer):
+    def put_offset_to_buffer(adress_pos, value_pos, buff: Buffer) -> None:
+        """ 
+        Opération: Ecrit l'adresse de la valeur dans le buffer sur l'emplacement offset puis pointe à la position initiale
+        """
         buff.set_position(adress_pos)
         buff.put_int(value_pos)
 
@@ -54,6 +61,9 @@ class Relation:
 
     @staticmethod
     def put_value_to_buffer(value, value_info: Column.ColumnInfo, buff: Buffer):
+        """ 
+        Opération: Ecrit la valeur dans le buffer 
+        """
         if isinstance(value_info.type, Column.Number):
             if type(value) == float:
                 buff.put_float(float(value))
@@ -67,6 +77,11 @@ class Relation:
 
 
     def readFromBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
+        """ 
+        Opération: Itère dans le buffer puis enregistre les valeurs dans le record, si il y a un varchar on lis l'adresse de début et de fin de chaque valeurs dans le offset.
+        Sortie: Retourne le nombre d'octet traité par la lecture
+        """
+
         # adress_pos = adress of the index in the offset
         # value_pos = adress of the value in the offset 
         has_varchar = self.has_varchar(self.columns)
@@ -97,6 +112,9 @@ class Relation:
     
     @staticmethod
     def read_value_from_buffer(value_info: Column.ColumnInfo, value_size: int, buff: Buffer)  -> int | float | str:
+        """ 
+        Opération: Lis une valeur du buffer
+        """
         if isinstance(value_info.type, Column.Number):
             if value_info.type == float:
                 return buff.read_float()
@@ -113,6 +131,9 @@ class Relation:
 
     @staticmethod
     def read_offset_from_buffer(adress_pos, value_pos, buff: Buffer):
+        """ 
+        Opération: Lis l'adresse d'une valeur dans le buffer sur l'emplacement offset puis pointe à la position initiale
+        """
         buff.set_position(adress_pos)
         next_value_pos = buff.read_int()
 
@@ -122,7 +143,11 @@ class Relation:
 
 
     @staticmethod
-    def has_varchar(columns):
+    def has_varchar(columns) -> bool:
+        """ 
+        Opération: Vérifie si la colonne contient un varchar
+        """
+
         for stuff in columns:
             if isinstance(stuff, Column.Char) and stuff.var:
                 return True
@@ -130,7 +155,10 @@ class Relation:
         return False
 
 
-    def addDataPage(self):
+    def addDataPage(self) -> None:
+        """ 
+          
+        """
         dataPageId = self.disk.AllocPage()
         buffer = self.bufferManager.getPage(dataPageId)
         
@@ -149,6 +177,9 @@ class Relation:
 
 
     def getFreeDataPageId(self, sizeRecord):
+        """ 
+         
+        """
         buffer = self.bufferManager.getPage(self.headerPageId)
         
         n = buffer.read_int()
