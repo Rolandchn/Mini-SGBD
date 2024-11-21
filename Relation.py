@@ -291,11 +291,26 @@ class Relation:
         return liste
     
     def InsertRecord(self, record):
-        pass
+        buffer = self.bufferManager.getPage(self.headerPageId)
+        buffer.set_position(0)
+        N = buffer.read_int()
+
+        liste = []
+
+        for i in range(N):
+            fidx = buffer.read_int()
+            pidx = buffer.read_int()
+
+        ...
 
     def GetAllRecords(self):
-        pass
+        liste = self.getDataPages()
+        liste2 = []
+        for dataPageId in liste:
+            liste3 = self.getRecordsInDataPage(dataPageId)
+            liste2.append(liste3)
 
+        return liste2
 
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
