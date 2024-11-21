@@ -17,7 +17,7 @@ class Relation:
         self.disk = disk
         self.bufferManager = bufferManager
     
-        #init
+        #init header page
         self.headerPageId = disk.AllocPage()
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.put_int(0)
@@ -197,9 +197,105 @@ class Relation:
         return None
         
     def writeRecordToDataPage(self, record: Record, pageId:PageId):
-        pass
+        buffer = self.bufferManager.getPage(self.headerPageId)
+        buffer.set_position(0)
+        N = buffer.read_int()
+
+        for i in range(N):
+            fidx = buffer.read_int()
+            pidx = buffer.read_int()
+
+            if pageId == PageId(fidx, pidx):
+                break
+
+        # page vide, init data page
+        if buffer.read_int() == self.disk.config.pagesize:
+            buffer2 = self.bufferManager.getPage(pageId)
+            buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slot)
+            
+            for i in range(self.disk.config.nb_slot):
+                buffer2.put_int(-1)
+                buffer2.put_int(0)
+            
+            buffer2.put_int(self.disk.config.nb_slot)
+            buffer2.put_int(0)
+            buffer.set_position(buffer.__pos - 4)
+            buffer.put_int(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slot)
+
+        # write record
+        buffer2.set_position(self.disk.config.pagesize - 4)
+        position_debut = buffer2.read_int()
+        tailleRecord = self.writeRecordToBuffer(record, buffer2, position_debut)
+
+        # maj rouge
+        buffer2.set_position(self.disk.config.pagesize - 4)
+        buffer2.put_int(position_debut + tailleRecord)
+
+        buffer2.set_position(self.disk.config.pagesize - 16)
+        
+        # maj vert 1
+        while buffer2.read_int() != -1:
+            buffer2.set_position(buffer.__pos - 12)
+        
+        # maj vert 2 
+        buffer2.put_int(position_debut)
+        buffer2.put_int(tailleRecord)
+
+        # décrémenter nb octet libre
+        buffer.set_position(buffer.__pos - 4)
+        t2 = buffer.read_int()
+        buffer.set_position(buffer.__pos - 4)
+        buffer.put_int(t2 - tailleRecord)
+
+        # incrementer jaune
+        buffer.set_position(0)
+        t3 = buffer.read_int() + 1
+        buffer.set_position(0)
+        buffer.put_int(t3)
+            
+
         # position début Rec M: pagesize - 4 - 4 - 8 * nb_slot
         # position début espace disponible = somme de toutes les tailles
+
+
+    def getRecordsInDataPage(self, pageId: PageId):
+        buffer = self.bufferManager.getPage(pageId)
+
+        buffer.set_position(self.disk.config.pagesize - 16)
+
+        liste = []
+
+        while buffer.read_int() != -1:
+            buffer.set_position(buffer.__pos - 4)
+            record = Record([])
+            self.readFromBuffer(record, buffer, buffer.read_int()) 
+            liste.append(record)       
+            buffer.set_position(buffer.__pos - 12)
+
+        return liste
+    
+    def getDataPages(self):
+        buffer = self.bufferManager.getPage(self.headerPageId)
+        buffer.set_position(0)
+        N = buffer.read_int()
+
+        liste = []
+
+        for i in range(N):
+            fidx = buffer.read_int()
+            pidx = buffer.read_int()
+
+            liste.append(PageId(fidx,pidx))
+            buffer.set_position(buffer.__pos + 4)
+
+        return liste
+    
+    def InsertRecord(self, record):
+        pass
+
+    def GetAllRecords(self):
+        pass
+
 
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
