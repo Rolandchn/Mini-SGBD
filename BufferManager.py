@@ -12,9 +12,10 @@ class BufferManager:
     def __init__(self, config:DBconfig, disk:DiskManager):
         self.config = config
         self.disk = disk
-        self.used_buffers: List[Buffer] = []
+        self.free_buffers: List[Buffer] = []
 
         self.buffers = [Buffer() for i in range(config.bm_buffercount)]
+
         self.CurrentReplacementPolicy = config.bm_policy[0] #LRU default 
 
 
@@ -33,15 +34,17 @@ class BufferManager:
 
     def getPage(self, pageId:PageId):
         free_buffer = None
+        has_pin_count0 = False
 
         # cas où il y a une page identique
         for buffer in self.buffers:
             if buffer.pin_count != 0:
                 continue
+            else:
+                has_pin_count0 = True
             
             if pageId == buffer.pageId:
-                self.used_buffers.append(buffer)
-            
+                buffer.pin_count += 1
                 return buffer
 
             # stock la 1er page libre
@@ -52,28 +55,36 @@ class BufferManager:
         if free_buffer is not None:
             free_buffer.pageId = pageId
 
-            self.used_buffers.append(free_buffer)
             self.disk.ReadPage(pageId,free_buffer)
+            free_buffer.pin_count += 1
+
             return free_buffer
 
-        # pour garder l'ordre d'utilisation ?
-        self.used_buffers.append(buffer)
-
         # cas où toutes les pages sont occupées
-        return self.getPageByPolicy(pageId)
+        if has_pin_count0:
+            return self.getPageByPolicy(pageId)
+        else:
+            print("erreur fatal - aucun buffer disponible")
 
 
     def getPageByPolicy(self, pageId:PageId):
         if self.CurrentReplacementPolicy == "LRU":
             # récupérer le premier buffer utilisé
-            buffer = self.used_buffers.pop(0)
+            buffer = self.free_buffers.pop(0)
         
         elif self.CurrentReplacementPolicy == "MRU":
             # récupérer le dernier buffer utilisé
-            buffer = self.used_buffers.pop()
-            
+            buffer = self.free_buffers.pop()
+        
+        if buffer.dirty_flag:
+            self.disk.WritePage(buffer.pageId, buffer)
+
         buffer.pageId = pageId
+        
         self.disk.ReadPage(pageId,buffer)
+
+        buffer.pin_count += 1
+
         return buffer
 
     #Que faire avec les pages dont le dirty est True
@@ -84,8 +95,9 @@ class BufferManager:
                 buffer.pageId = None
 
                 # valeur initiale ?
-                buffer.dirty_flag = False
                 buffer.pin_count -= 1
+
+                self.free_buffers.append(buffer)
 
                 break
 
@@ -102,18 +114,22 @@ class BufferManager:
 
 
     def FlushBuffers(self):
-        for buffer in self.used_buffers:
+        for buffer in self.buffers:
             if buffer.dirty_flag:
                 self.disk.WritePage(buffer.pageId,buffer)
                 buffer.dirty_flag = False
             buffer.pin_count = 0
             buffer.pageId = None
-            #azer
+
 
 if __name__ == "__main__":
     bufferManager = BufferManager.setup("DBconfig.json")
     bufferManager.disk.LoadState()
-    print(bufferManager.getPage(PageId(1,1)))
+
+    buff1 = bufferManager.getPage(PageId(0, 0))
+
+    print(buff1.read_int())
+    print(buff1.read_char())
 
     bufferManager.disk.SaveState()
 

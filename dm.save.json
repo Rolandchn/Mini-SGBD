@@ -1,20 +1,7 @@
 {
     "last_created_page": {
-        "fileIdx": 2,
-        "pageIdx": 1
+        "fileIdx": 0,
+        "pageIdx": 0
     },
-    "free_pageIds": [
-        {
-            "fileIdx": 0,
-            "pageIdx": 0
-        },
-        {
-            "fileIdx": 0,
-            "pageIdx": 1
-        },
-        {
-            "fileIdx": 0,
-            "pageIdx": 2
-        }
-    ]
+    "free_pageIds": []
 }

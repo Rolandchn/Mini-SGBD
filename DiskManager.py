@@ -42,8 +42,8 @@ class DiskManager:
         filename = f"F{freePageId.fileIdx}.rsdb"
 
         with open(filename, "wb") as f:
-
-            f.write(b"")
+            for i in range(self.config.pagesize):
+                f.write(b"#")
 
 
         return self.current_pageId
@@ -139,9 +139,9 @@ if __name__ == "__main__":
     config = DBconfig.LoadDBConfig("DBconfig.json")
     disk = DiskManager(config)
     buff = Buffer()
-         
-    disk.LoadState()
 
-    disk.DeAllocPage(PageId(0, 2))
-    
+    disk.AllocPage()
+
+    disk.ReadPage(PageId(0, 0), buff)
+
     disk.SaveState()
