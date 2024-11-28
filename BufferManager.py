@@ -109,14 +109,11 @@ class BufferManager:
             buffer.pin_count = 0
             buffer.pageId = None
             #azer
+
 if __name__ == "__main__":
     bufferManager = BufferManager.setup("DBconfig.json")
     bufferManager.disk.LoadState()
     print(bufferManager.getPage(PageId(1,1)))
-    print(bufferManager.getPage(PageId(1,1)))
-    print(bufferManager.getPage(PageId(1,3)))
-    print(bufferManager.getPage(PageId(2,1)))
-    print(bufferManager.getPage(PageId(15,1)))
 
     bufferManager.disk.SaveState()
 
