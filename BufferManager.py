@@ -76,6 +76,7 @@ class BufferManager:
             # récupérer le dernier buffer utilisé
             buffer = self.free_buffers.pop()
         
+        print(buffer.dirty_flag, " ",  buffer.pageId)
         if buffer.dirty_flag:
             self.disk.WritePage(buffer.pageId, buffer)
 
@@ -91,9 +92,6 @@ class BufferManager:
     def FreePage(self, pageId:PageId):
         for buffer in self.buffers:
             if pageId == buffer.pageId:
-                # réinitialiser les attributs de buffer
-                buffer.pageId = None
-
                 # valeur initiale ?
                 buffer.pin_count -= 1
 
@@ -126,12 +124,12 @@ if __name__ == "__main__":
     bufferManager = BufferManager.setup("DBconfig.json")
     bufferManager.disk.LoadState()
 
-    buff1 = bufferManager.getPage(PageId(0, 0))
+    buff = bufferManager.getPage(PageId(2, 1))
+    print(buff.read_int())
+    print(buff.read_char())
+    
 
-    print(buff1.read_int())
-    print(buff1.read_char())
 
-    bufferManager.disk.SaveState()
 
 
     #Est-on sensé rajouter un read a partir du disque dans le getPageL

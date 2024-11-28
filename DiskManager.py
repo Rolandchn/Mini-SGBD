@@ -42,7 +42,7 @@ class DiskManager:
         filename = f"F{freePageId.fileIdx}.rsdb"
 
         with open(filename, "wb") as f:
-            for i in range(self.config.pagesize):
+            for i in range(self.config.dm_maxfilesize):
                 f.write(b"#")
 
 
@@ -74,7 +74,7 @@ class DiskManager:
         
         pagebyte = self.config.pagesize * pageId.pageIdx
 
-        with open(filename, "wb") as f:
+        with open(filename, "r+b") as f:
             # Pointer au début de la page
             f.seek(pagebyte, 0)
 
@@ -140,8 +140,12 @@ if __name__ == "__main__":
     disk = DiskManager(config)
     buff = Buffer()
 
-    disk.AllocPage()
+    buff.put_int(1)
 
-    disk.ReadPage(PageId(0, 0), buff)
+    disk.WritePage(PageId(1, 0), buff)
+    disk.ReadPage(PageId(1, 0), buff)
+
+    print(buff.read_int())
+    print(buff.read_char())
 
     disk.SaveState()
