@@ -1,27 +1,37 @@
 from dataclasses import dataclass
 
-import enum
 
-from PageId import PageId
-
-# pas nécessaire, le type d'une valeur peut être vérifié par type(var)
-class ColumnType(enum.Enum):
-    INT = enum.auto()
-    REAL = enum.auto()
-    CHAR = enum.auto()
-    VALCHAR = enum.auto()    
+@dataclass
+class Base:
+    def __post_init__(self):
+        for value, value_type in self.__annotations__.items():
+            assert isinstance(getattr(self, value), value_type)
 
 
 @dataclass
-class ColumnInfo:
+class Number:
+    type: int | float
+    size: int = 4
+
+
+@dataclass
+class Char:
+    size: int
+    var: bool = False
+
+
+@dataclass
+class ColumnInfo(Base):
     name: str
-    type: ColumnType
-
-
-
-
+    type: Number | Char
 
 
 if __name__ == "__main__":
-    c = ColumnInfo("test", PageId)
-    print(c)
+    c = Char(20)
+    cv = Char(20, var=True)
+    n = Number(int)
+    f = Number(float)
+
+    column_info = ColumnInfo("test", c)
+
+    print(isinstance(c, Char))

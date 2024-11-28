@@ -13,7 +13,12 @@ class DiskManager:
         self.free_pageIds = []
 
 
-    def AllocPage(self):
+    def AllocPage(self) -> PageId:
+        """ 
+        Opération: Cherche un pageId libre 
+        Sortie: Un pageId libre (nouveau ou existant) 
+        """
+
         if(self.free_pageIds != []): 
             return self.free_pageIds.pop(0)
 
@@ -34,7 +39,10 @@ class DiskManager:
         return self.current_pageId
 
 
-    def ReadPage(self, pageId:PageId, buffer:Buffer):
+    def ReadPage(self, pageId:PageId, buffer:Buffer) -> None:
+        """ 
+        Opération: Lis le buffer  
+        """
         filename = f"F{pageId.fileIdx}.rsdb"
         pagebyte = self.config.pagesize * pageId.pageIdx
 
@@ -45,11 +53,13 @@ class DiskManager:
             # Lire de la page
             data = f.read(self.config.pagesize)
 
-            # ???
             buffer.from_bytes(data)
             
 
-    def WritePage(self, pageId:PageId, buffer:Buffer):
+    def WritePage(self, pageId:PageId, buffer:Buffer) -> None:
+        """ 
+        Opération: Ecrit le buffer dans un fichier de donnée.
+        """
         filename = f"F{pageId.fileIdx}.rsdb"
         
         pagebyte = self.config.pagesize * pageId.pageIdx
@@ -65,7 +75,10 @@ class DiskManager:
             f.write(data)
 
 
-    def DeAllocPage(self, pageId:PageId):
+    def DeAllocPage(self, pageId:PageId) -> None:
+        """
+        Opération: Ajoute le pageId dans la liste de pageId réutilisable
+        """
         for pId in self.free_pageIds:
             if pId == pageId:
                 raise ValueError(f"la page ({pageId.fileIdx},{pageId.pageIdx}) a déja été desalouée.")
@@ -77,7 +90,10 @@ class DiskManager:
         self.free_pageIds.append(pageId)
 
 
-    def SaveState(self):
+    def SaveState(self) -> None:
+        """
+        Opération: Sauvegarde toutes les données, sous forme de dictionnaire, dans le fichier dm.save.json
+        """
         if self.current_pageId is None:
             current_pageId = None
 
@@ -94,6 +110,9 @@ class DiskManager:
             
             
     def LoadState(self):
+        """ 
+        Opération: Charge toutes les données à partir du fichier dm.save.json
+        """
         try:
             with open("dm.save.json", "r") as f:
                 data_dict = json.load(f)
