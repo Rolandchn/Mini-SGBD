@@ -157,7 +157,7 @@ class Relation:
 
     def addDataPage(self) -> None:
         """ 
-          
+        
         """
         dataPageId = self.disk.AllocPage()
         buffer = self.bufferManager.getPage(dataPageId)

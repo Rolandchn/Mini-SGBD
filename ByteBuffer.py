@@ -6,6 +6,9 @@ class ByteBuffer:
     def __init__(self, size=30):
         self.__bytes = [None]*size
         self.__pos = 0
+    
+    def getByte(self):
+        return self.__bytes
 
     def set_position(self, pos):
         self.__pos = pos
