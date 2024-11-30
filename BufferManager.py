@@ -44,6 +44,7 @@ class BufferManager:
         for buffer in self.buffers:
             if buffer.pin_count != 0:
                 continue
+
             else:
                 has_pin_count0 = True
             
@@ -64,9 +65,10 @@ class BufferManager:
 
             return free_buffer
 
-        # cas où toutes les pages sont occupées
+        # cas où toutes les buffers sont occupées
         if has_pin_count0:
             return self.getPageByPolicy(pageId)
+        
         else:
             print("erreur fatal - aucun buffer disponible")
 
