@@ -32,7 +32,11 @@ class BufferManager:
         return bufferManager 
 
 
-    def getPage(self, pageId:PageId):
+    def getPage(self, pageId:PageId) -> Buffer:
+        """
+        Opération: Retourne un buffer libre ou buffer du même pageId ou buffer remplacé
+        Sortie: Buffer
+        """
         free_buffer = None
         has_pin_count0 = False
 
@@ -67,7 +71,12 @@ class BufferManager:
             print("erreur fatal - aucun buffer disponible")
 
 
-    def getPageByPolicy(self, pageId:PageId):
+    def getPageByPolicy(self, pageId:PageId) -> Buffer:
+        """
+        Opération: Retourne un buffer parmis les buffers inactifs (pin_count = 0) et sauvegarde le buffer s'il a déjà été utilisé (dirty_flag = True)
+        Sortie: Buffer libre
+        """
+
         if self.CurrentReplacementPolicy == "LRU":
             # récupérer le premier buffer utilisé
             buffer = self.free_buffers.pop(0)
@@ -76,7 +85,6 @@ class BufferManager:
             # récupérer le dernier buffer utilisé
             buffer = self.free_buffers.pop()
         
-        print(buffer.dirty_flag, " ",  buffer.pageId)
         if buffer.dirty_flag:
             self.disk.WritePage(buffer.pageId, buffer)
 
@@ -88,11 +96,14 @@ class BufferManager:
 
         return buffer
 
-    #Que faire avec les pages dont le dirty est True
-    def FreePage(self, pageId:PageId):
+
+    def FreePage(self, pageId:PageId) -> None:
+        """
+        Opération: Décremente de pin_count d'un buffer grâce au pageId
+        """
         for buffer in self.buffers:
             if pageId == buffer.pageId:
-                # valeur initiale ?
+                # valeur initiale 0 car on utilise qu'un seul processus
                 buffer.pin_count -= 1
 
                 self.free_buffers.append(buffer)
@@ -100,7 +111,10 @@ class BufferManager:
                 break
 
 
-    def SetCurrentReplacementPolicy(self):
+    def SetCurrentReplacementPolicy(self) -> None:
+        """
+        Opération: Demande à l'utilisateur la politique de remplacement
+        """
         while True:
             user_input = input("Choose a policy LRU or MRU: ")
 
@@ -111,7 +125,10 @@ class BufferManager:
             print("This is policy does not exist.")
 
 
-    def FlushBuffers(self):
+    def FlushBuffers(self) -> None:
+        """
+        Opération: Enregistre tous les buffers utilisés (dirty_flag = True) et les vide
+        """
         for buffer in self.buffers:
             if buffer.dirty_flag:
                 self.disk.WritePage(buffer.pageId,buffer)
