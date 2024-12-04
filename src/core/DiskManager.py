@@ -11,6 +11,11 @@ config_file = os.path.join(current_dir, "..", "config", "DBconfig.json")
 
 savefile = os.path.join(current_dir, "..", "config", "dm.save.json")
 
+with open(config_path, "r") as config_file:
+    config = json.load(config_file)
+
+dbpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", config["dbpath"]))
+
 class DiskManager:
     def __init__(self, config:DBconfig):
         self.config = config
