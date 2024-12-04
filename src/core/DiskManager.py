@@ -15,6 +15,7 @@ with open(config_file, "r") as config_file:
     config = json.load(config_file)
 
 dbpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", config["dbpath"]))
+os.makedirs(dbpath, exist_ok=True)
 
 class DiskManager:
     def __init__(self, config:DBconfig):
