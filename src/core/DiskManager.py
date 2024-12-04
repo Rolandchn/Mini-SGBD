@@ -50,7 +50,8 @@ class DiskManager:
         
         self.current_pageId = freePageId
 
-        filename = f"F{freePageId.fileIdx}.rsdb"
+        filename = os.path.join(dbpath, f"F{freePageId.fileIdx}.rsdb")
+
 
         with open(filename, "wb") as f:
             for i in range(self.config.dm_maxfilesize):
@@ -64,7 +65,7 @@ class DiskManager:
         """ 
         Opération: Lis le buffer  
         """
-        filename = f"F{pageId.fileIdx}.rsdb"
+        filename = os.path.join(dbpath, f"F{pageId.fileIdx}.rsdb")
         pagebyte = self.config.pagesize * pageId.pageIdx
 
         with open(filename, "rb") as f:
@@ -81,7 +82,7 @@ class DiskManager:
         """ 
         Opération: Ecrit le buffer dans un fichier de donnée.
         """
-        filename = f"F{pageId.fileIdx}.rsdb"
+        filename = os.path.join(dbpath, f"F{pageId.fileIdx}.rsdb")
         
         pagebyte = self.config.pagesize * pageId.pageIdx
 
