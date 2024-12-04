@@ -3,12 +3,17 @@ from PageId import PageId
 from Buffer import Buffer
 
 import json
+import os
 
+current_dir = os.path.dirname(__file__)
+
+config_file = os.path.join(current_dir, "..", "config", "DBconfig.json")
+
+savefile = os.path.join(current_dir, "..", "config", "dm.save.json")
 
 class DiskManager:
     def __init__(self, config:DBconfig):
         self.config = config
-
         self.current_pageId = None
         self.free_pageIds = []
 
@@ -115,7 +120,7 @@ class DiskManager:
         data = {"last_created_page": current_pageId,
               "free_pageIds": free_pageIds}
         
-        with open("dm.save.json", "w") as f:
+        with open(savefile, "w") as f:
             json.dump(data, f, indent= 4)
             
             
@@ -124,7 +129,7 @@ class DiskManager:
         Opération: Charge toutes les données à partir du fichier dm.save.json
         """
         try:
-            with open("dm.save.json", "r") as f:
+            with open(savefile, "r") as f:
                 data_dict = json.load(f)
             
             self.current_pageId = PageId(**data_dict["last_created_page"]) if data_dict["last_created_page"] is not None else None
@@ -136,7 +141,7 @@ class DiskManager:
 
 
 if __name__ == "__main__":
-    config = DBconfig.LoadDBConfig("DBconfig.json")
+    config = DBconfig.LoadDBConfig(config_file)
     disk = DiskManager(config)
     buff = Buffer()
 
