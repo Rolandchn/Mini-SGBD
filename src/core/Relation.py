@@ -1,3 +1,4 @@
+import os
 from typing import List
 import Column
 
@@ -31,19 +32,23 @@ class Relation:
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
+            print(1)
             self.put_offset_to_buffer(pos, buff.__pos + 4 * (self.nb_column + 1), buff)
             adress_pos = pos + 4
         
         else:
+            print(2)
             buff.set_position(pos)
+            adress_pos = pos
 
         # record = single row of values 
         for value, value_info in zip(record.values, self.columns):
-            self.put_value_to_buffer(value, value_info, buff)
+            a = self.put_value_to_buffer(value, value_info, buff)
 
             if has_varchar:
                 self.put_offset_to_buffer(adress_pos, buff.__pos, buff)
-                adress_pos += 4
+            
+            adress_pos += a
         
         return adress_pos - pos
 
@@ -71,10 +76,18 @@ class Relation:
             else:
                 buff.put_int(int(value))
 
+            return 4
+
         elif isinstance(value_info.type, Column.Char):
+            count = 0
+
             for char in value:
                 buff.put_char(char)
+                count += 1
 
+            return count
+        
+        # modif pour var char
 
     def readFromBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
@@ -87,27 +100,31 @@ class Relation:
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
-            adress_pos = pos + 4
+            adress_pos = pos + 4 # pourquoi +4 ?
             # value_pos = buff.__pos
-            next_value_pos = self.read_offset_from_buffer(adress_pos, buff.__pos + 4 * (self.nb_column + 1), buff)
+            next_value_pos = self.read_offset_from_buffer(adress_pos, buff.getPos() + 4 * (self.nb_column + 1), buff)
         
         else:
             buff.set_position(pos)
+            adress_pos = 0
 
         # record = single row of values 
         for value_info in self.columns:
             if has_varchar:
-                record.values.append(self.read_value_from_buffer(value_info, next_value_pos - buff.__pos, buff))
+                a, b = self.read_value_from_buffer(value_info, next_value_pos - buff.getPos())
+                record.values.append(a, buff)
 
-                adress_pos += 4
                 # get the value from adress_pos, and go back to the last buffer position
-                next_value_pos = self.read_offset_from_buffer(adress_pos, buff.__pos, buff)
+                next_value_pos = self.read_offset_from_buffer(adress_pos, buff.getPos(), buff)
             
             else:
-                record.values.append(self.read_value_from_buffer(value_info, value_info.type.size, buff))
+                a, b = self.read_value_from_buffer(value_info, value_info.type.size, buff)
+                record.values.append(a)
+                
+            adress_pos += b
     
         if has_varchar: return next_value_pos
-        return buff.__pos - pos
+        return buff.getPos() - pos
     
     
     @staticmethod
@@ -117,16 +134,18 @@ class Relation:
         """
         if isinstance(value_info.type, Column.Number):
             if value_info.type == float:
-                return buff.read_float()
+                return (buff.read_float(), 4)
     
-            return buff.read_int()
+            return (buff.read_int(), 4)
         
         value = ""
+        count = 0
 
         for i in range(value_size):
             value += buff.read_char()
+            count += 1
 
-        return value
+        return (value, count)
 
 
     @staticmethod
@@ -149,6 +168,8 @@ class Relation:
         """
 
         for stuff in columns:
+            print(stuff)
+            print(isinstance(stuff, Column.Char), stuff.var)
             if isinstance(stuff, Column.Char) and stuff.var:
                 return True
             
@@ -314,3 +335,31 @@ class Relation:
 
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
+
+if __name__ == "__main__":
+    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
+
+    liste = [Column.ColumnInfo("test1", Column.Char(5, True)), Column.ColumnInfo("test2", Column.Number(int))]
+
+    relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
+    
+    record1 = Record(["abc", 2])
+
+    buff = bufferManager.getPage(PageId(0, 0))
+
+    op1 = relation.writeRecordToBuffer(record1, buff, 0)
+
+    buff.set_position(0)
+
+    print(buff.read_char())
+    print(buff.read_char())
+    print(buff.read_char())
+
+    """ record2 = Record([])
+
+    op2 = relation.readFromBuffer(record2, buff, 0)
+
+    for x in record2.values:
+        print(x)
+
+    print(op2) """

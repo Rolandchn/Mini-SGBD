@@ -9,6 +9,9 @@ class ByteBuffer:
     
     def getByte(self):
         return self.__bytes
+    
+    def getPos(self):
+        return self.__pos
 
     def set_position(self, pos):
         self.__pos = pos
