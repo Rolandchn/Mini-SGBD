@@ -163,7 +163,7 @@ class Relation:
         buffer = self.bufferManager.getPage(dataPageId)
         
         n = buffer.read_int()
-        buffer.set_position(12 * n)
+        buffer.set_position(12 * n) #Ajouter 4
 
         buffer.put_int(dataPageId.fileIdx)
         buffer.put_int(dataPageId.pageIdx)
