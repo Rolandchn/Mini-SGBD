@@ -29,13 +29,14 @@ class Relation:
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
         Sortie: Le nombre d'octet traité par l'écriture
         """
-        adress_pos = pos
         
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
+            adress_pos = pos
+
             self.put_offset_to_buffer(pos, pos + 4 * (self.nb_column + 1), buff)
-            
+
             adress_pos = pos + 4
         
         else:
@@ -98,29 +99,30 @@ class Relation:
         # adress_pos = adress of the index in the offset
         # value_pos = adress of the value 
         
-        adress_pos = pos
         value_size = 0
         
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
-            value_pos = self.read_offset_from_buffer(adress_pos, buff)
-            adress_pos += 4 
-        
+            adress_pos = pos
+            
         else:
             buff.set_position(pos)
 
         # record = single row of values 
         for value_info in self.columns:
             if has_varchar:
-                value_pos = self.read_offset_from_buffer(adress_pos, buff.getPos(), buff)
+                value_pos = self.read_offset_from_buffer(adress_pos, buff)
+
                 adress_pos += 4
+
+                value_size = self.read_offset_from_buffer(adress_pos, buff) - value_pos
+
+                buff.set_position(value_pos)
             
             value = self.read_value_from_buffer(value_info, value_size, buff)
             record.values.append(value)
     
-        if has_varchar: 
-            return value_pos
         return buff.getPos() - pos
     
     
@@ -159,7 +161,11 @@ class Relation:
         """
         buff.set_position(adress_pos)
 
-        return buff.read_int()
+        value_pos = buff.read_int()
+
+        buff.set_position(value_pos)
+
+        return value_pos
 
 
     @staticmethod
@@ -338,7 +344,7 @@ class Relation:
 if __name__ == "__main__":
     bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
 
-    liste = [Column.ColumnInfo("test1", Column.VarChar(5)), Column.ColumnInfo("test2", Column.Int())]
+    liste = [Column.ColumnInfo("test1", Column.Char(3)), Column.ColumnInfo("test2", Column.Int())]
 
     relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
     
@@ -350,20 +356,11 @@ if __name__ == "__main__":
 
     buff.set_position(0)
 
-    print(buff.read_int())
-    print(buff.read_int())
-    print(buff.read_int())
-
-    print(buff.read_char())
-    print(buff.read_char())
-    print(buff.read_char())
-    print(buff.read_int())
-
-    """ record2 = Record([])
+    record2 = Record([])
 
     op2 = relation.readFromBuffer(record2, buff, 0)
 
     for x in record2.values:
         print(x)
 
-    print(op2) """
+    print(op2)
