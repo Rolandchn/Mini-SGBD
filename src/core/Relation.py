@@ -29,26 +29,25 @@ class Relation:
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
         Sortie: Le nombre d'octet traité par l'écriture
         """
+        adress_pos = pos
+        
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
-            print(1)
-            self.put_offset_to_buffer(pos, buff.__pos + 4 * (self.nb_column + 1), buff)
+            self.put_offset_to_buffer(pos, pos + 4 * (self.nb_column + 1), buff)
             adress_pos = pos + 4
         
         else:
-            print(2)
             buff.set_position(pos)
-            adress_pos = pos
 
         # record = single row of values 
-        for value, value_info in zip(record.values, self.columns):
-            a = self.put_value_to_buffer(value, value_info, buff)
+        for value, column in zip(record.values, self.columns):
+            self.put_value_to_buffer(value, column, buff)
 
             if has_varchar:
-                self.put_offset_to_buffer(adress_pos, buff.__pos, buff)
+                self.put_offset_to_buffer(adress_pos, buff.getPos(), buff)
             
-            adress_pos += a
+            adress_pos += 4
         
         return adress_pos - pos
 
@@ -65,27 +64,29 @@ class Relation:
 
 
     @staticmethod
-    def put_value_to_buffer(value, value_info: Column.ColumnInfo, buff: Buffer):
+    def put_value_to_buffer(value, column: Column.ColumnInfo, buff: Buffer):
         """ 
         Opération: Ecrit la valeur dans le buffer 
         """
-        if isinstance(value_info.type, Column.Number):
-            if type(value) == float:
-                buff.put_float(float(value))
-            
-            else:
-                buff.put_int(int(value))
-
+        if isinstance(column.type, Column.Int):
+            buff.put_int(int(value))
             return 4
 
-        elif isinstance(value_info.type, Column.Char):
-            count = 0
 
-            for char in value:
-                buff.put_char(char)
-                count += 1
+        elif isinstance(column.type, Column.Float):
+            buff.put_float(float(value))
+            return 4
+        
+        elif isinstance(column.type, Column.Char):
+            for index in range(column.type.size):
+                buff.put_char(value[index])
 
-            return count
+            return index
+
+        for index in range(len(value)):
+            buff.put_char(value[index])
+
+        return index
         
         # modif pour var char
 
@@ -101,8 +102,8 @@ class Relation:
 
         if has_varchar:
             adress_pos = pos + 4 # pourquoi +4 ?
-            # value_pos = buff.__pos
-            next_value_pos = self.read_offset_from_buffer(adress_pos, buff.getPos() + 4 * (self.nb_column + 1), buff)
+            # value_pos = buff.getPos()
+            next_value_pos = self.read_offset_from_buffer(adress_pos, pos + 4 * (self.nb_column + 1), buff)
         
         else:
             buff.set_position(pos)
@@ -162,15 +163,13 @@ class Relation:
 
 
     @staticmethod
-    def has_varchar(columns) -> bool:
+    def has_varchar(columns:List[Column.ColumnInfo]) -> bool:
         """ 
         Opération: Vérifie si la colonne contient un varchar
         """
 
-        for stuff in columns:
-            print(stuff)
-            print(isinstance(stuff, Column.Char), stuff.var)
-            if isinstance(stuff, Column.Char) and stuff.var:
+        for column in columns:
+            if isinstance(column.type, Column.VarChar):
                 return True
             
         return False
@@ -216,7 +215,7 @@ class Relation:
                 return PageId(buffer.read_int(), buffer.read_int())
         
         return None
-        
+
     def writeRecordToDataPage(self, record: Record, pageId:PageId):
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
@@ -339,11 +338,11 @@ class Relation:
 if __name__ == "__main__":
     bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
 
-    liste = [Column.ColumnInfo("test1", Column.Char(5, True)), Column.ColumnInfo("test2", Column.Number(int))]
+    liste = [Column.ColumnInfo("test1", Column.VarChar(5)), Column.ColumnInfo("test2", Column.Int())]
 
     relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
     
-    record1 = Record(["abc", 2])
+    record1 = Record(["aze", 2])
 
     buff = bufferManager.getPage(PageId(0, 0))
 
@@ -351,9 +350,14 @@ if __name__ == "__main__":
 
     buff.set_position(0)
 
+    print(buff.read_int())
+    print(buff.read_int())
+    print(buff.read_int())
+
     print(buff.read_char())
     print(buff.read_char())
     print(buff.read_char())
+    print(buff.read_int())
 
     """ record2 = Record([])
 
