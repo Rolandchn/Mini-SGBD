@@ -19,10 +19,10 @@ class Relation:
         self.bufferManager = bufferManager
     
         #init header page
-        self.headerPageId = disk.AllocPage()
-        buffer = self.bufferManager.getPage(self.headerPageId)
-        buffer.put_int(0)
-    
+        buffer = self.bufferManager.getPage(PageId(0,0))
+        if(buffer.read_int() == 589505315): 
+            buffer.set_position(0)
+            buffer.put_int(0)
 
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
@@ -186,7 +186,7 @@ class Relation:
         
         """
         dataPageId = self.disk.AllocPage()
-        buffer = self.bufferManager.getPage(dataPageId)
+        buffer = self.bufferManager.getPage(self.headerPageId)
         
         n = buffer.read_int()
         buffer.set_position(12 * n + 4)
