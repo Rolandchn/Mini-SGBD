@@ -17,19 +17,19 @@ class Relation:
 
         self.disk = disk
         self.bufferManager = bufferManager
-
         #init header page
         script_dir = Path(__file__).parent
         try:
             file_path = script_dir / "../../storage/F0.rsdb"
             file_path.resolve()
-            headerPageId = PageId(0, 0) if file_path.is_file() else disk.AllocPage()
+            self.headerPageId = PageId(0, 0) if file_path.is_file() else disk.AllocPage()
         except Exception as e:
             print("Erreur :", e)
-        buffer = self.bufferManager.getPage(PageId(0,0))
+        buffer = self.bufferManager.getPage(self.headerPageId)
         if(buffer.read_char() == "#"): 
             buffer.set_position(0)
             buffer.put_int(0)
+            buffer.dirty_flag = True
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
@@ -193,20 +193,22 @@ class Relation:
         """
         dataPageId = self.disk.AllocPage()
         buffer = self.bufferManager.getPage(self.headerPageId)
-        
-        n = buffer.read_int()
-        buffer.set_position(12 * n + 4)
+        # MAJ header page
+        try:
+            n = buffer.read_int()
+            buffer.set_position(0)
+            buffer.put_int(n + 1)
+            buffer.set_position(12 * n + 4)
 
-        buffer.put_int(dataPageId.fileIdx)
-        buffer.put_int(dataPageId.pageIdx)
-        
-        m = self.disk.config.nb_slot
-        pageSize = self.disk.config.pagesize
-        buffer.put_int(pageSize - 8 * (m + 1))
+            buffer.put_int(dataPageId.fileIdx)
+            buffer.put_int(dataPageId.pageIdx)
+            
+            m = self.disk.config.nb_slot
+            pageSize = self.disk.config.pagesize
+            buffer.put_int(pageSize - 8 * (m + 1))
 
-        buffer.set_position(0)
-        buffer.put_int(n + 1)
-
+        except Exception as e:
+            print("Erreur :", e)
 
     def getFreeDataPageId(self, sizeRecord):
         """ 
