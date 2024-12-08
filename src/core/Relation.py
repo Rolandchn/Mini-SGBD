@@ -35,6 +35,7 @@ class Relation:
 
         if has_varchar:
             self.put_offset_to_buffer(pos, pos + 4 * (self.nb_column + 1), buff)
+            
             adress_pos = pos + 4
         
         else:
@@ -46,10 +47,9 @@ class Relation:
 
             if has_varchar:
                 self.put_offset_to_buffer(adress_pos, buff.getPos(), buff)
-            
-            adress_pos += 4
+                adress_pos += 4
         
-        return adress_pos - pos
+        return buff.getPos() - pos
 
 
     @staticmethod
@@ -88,7 +88,6 @@ class Relation:
 
         return index
         
-        # modif pour var char
 
     def readFromBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
@@ -97,34 +96,31 @@ class Relation:
         """
 
         # adress_pos = adress of the index in the offset
-        # value_pos = adress of the value in the offset 
+        # value_pos = adress of the value 
+        
+        adress_pos = pos
+        value_size = 0
+        
         has_varchar = self.has_varchar(self.columns)
 
         if has_varchar:
-            adress_pos = pos + 4 # pourquoi +4 ?
-            # value_pos = buff.getPos()
-            next_value_pos = self.read_offset_from_buffer(adress_pos, pos + 4 * (self.nb_column + 1), buff)
+            value_pos = self.read_offset_from_buffer(adress_pos, buff)
+            adress_pos += 4 
         
         else:
             buff.set_position(pos)
-            adress_pos = 0
 
         # record = single row of values 
         for value_info in self.columns:
             if has_varchar:
-                a, b = self.read_value_from_buffer(value_info, next_value_pos - buff.getPos())
-                record.values.append(a, buff)
-
-                # get the value from adress_pos, and go back to the last buffer position
-                next_value_pos = self.read_offset_from_buffer(adress_pos, buff.getPos(), buff)
+                value_pos = self.read_offset_from_buffer(adress_pos, buff.getPos(), buff)
+                adress_pos += 4
             
-            else:
-                a, b = self.read_value_from_buffer(value_info, value_info.type.size, buff)
-                record.values.append(a)
-                
-            adress_pos += b
+            value = self.read_value_from_buffer(value_info, value_size, buff)
+            record.values.append(value)
     
-        if has_varchar: return next_value_pos
+        if has_varchar: 
+            return value_pos
         return buff.getPos() - pos
     
     
@@ -133,33 +129,37 @@ class Relation:
         """ 
         Opération: Lis une valeur du buffer
         """
-        if isinstance(value_info.type, Column.Number):
-            if value_info.type == float:
-                return (buff.read_float(), 4)
-    
-            return (buff.read_int(), 4)
+        if isinstance(value_info.type, Column.Int):
+            return buff.read_int()
         
+        elif isinstance(value_info.type, Column.Float):
+            return buff.read_float()
+        
+        elif isinstance(value_info.type, Column.Char):
+            value = ""
+
+            for i in range(value_info.type.size):
+                value += buff.read_char()
+
+            return value
+        
+        # cas VarChar
         value = ""
-        count = 0
 
         for i in range(value_size):
             value += buff.read_char()
-            count += 1
 
-        return (value, count)
+        return value
 
 
     @staticmethod
-    def read_offset_from_buffer(adress_pos, value_pos, buff: Buffer):
+    def read_offset_from_buffer(adress_pos, buff: Buffer):
         """ 
         Opération: Lis l'adresse d'une valeur dans le buffer sur l'emplacement offset puis pointe à la position initiale
         """
         buff.set_position(adress_pos)
-        next_value_pos = buff.read_int()
 
-        buff.set_position(value_pos)
-
-        return next_value_pos
+        return buff.read_int()
 
 
     @staticmethod
@@ -342,7 +342,7 @@ if __name__ == "__main__":
 
     relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
     
-    record1 = Record(["aze", 2])
+    record1 = Record(["azt", 2])
 
     buff = bufferManager.getPage(PageId(0, 0))
 
