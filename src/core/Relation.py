@@ -1,7 +1,7 @@
 import os
 from typing import List
 import Column
-
+from pathlib import Path
 from PageId import PageId
 from Buffer import Buffer
 from Record import Record
@@ -17,13 +17,19 @@ class Relation:
 
         self.disk = disk
         self.bufferManager = bufferManager
-    
+
         #init header page
+        script_dir = Path(__file__).parent
+        try:
+            file_path = script_dir / "../../storage/F0.rsdb"
+            file_path.resolve()
+            headerPageId = PageId(0, 0) if file_path.is_file() else disk.AllocPage()
+        except Exception as e:
+            print("Erreur :", e)
         buffer = self.bufferManager.getPage(PageId(0,0))
-        if(buffer.read_int() == 589505315): 
+        if(buffer.read_char() == "#"): 
             buffer.set_position(0)
             buffer.put_int(0)
-
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
@@ -364,3 +370,4 @@ if __name__ == "__main__":
         print(x)
 
     print(op2)
+    
