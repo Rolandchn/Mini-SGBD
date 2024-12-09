@@ -197,19 +197,22 @@ class Relation:
         """ 
         
         """
-        buffer = self.bufferManager.getPage(self.headerPageId)
-        buffer.set_position(0)
-        n = buffer.read_int()
-        print(n)
-        dataPageId = self.disk.AllocPage()
-        print(dataPageId)
-        # MAJ header page
-        print(self.headerPageId)
+        buff1 = relation.bufferManager.getPage(PageId(0,1))
+        buff1.set_position(relation.disk.config.pagesize - 8 - 8 * relation.disk.config.nb_slots)
+        print("MMMM",buff1.read_int())
+        print("position début DDDD: ",buff1.read_int())
+        self.bufferManager.FlushBuffers()
         
+        buffer = self.bufferManager.getPage(self.headerPageId)
+        dataPageId = self.disk.AllocPage()
+        buff1 = relation.bufferManager.getPage(PageId(0,1))
+        buff1.set_position(relation.disk.config.pagesize - 8 - 8 * relation.disk.config.nb_slots)
+        print("SSS",buff1.read_int())
+        print("position début SSS: ",buff1.read_int())
+        
+        # MAJ header page
         buffer.set_position(0)
         n = buffer.read_int()
-        print(n)
-        print(buffer.pageId)
         buffer.set_position(0)
         buffer.put_int(n + 1)
         buffer.set_position(12 * n + 4)
@@ -220,8 +223,7 @@ class Relation:
         buffer.put_int(pageSize - 8 * (m + 1))
         buffer.dirty_flag = True
         #TODO free page au lieu de flushbuffers
-        bufferManager.FlushBuffers()
-
+        bufferManager.FlushBuffers()        
         #Init data page
         buffer2 = self.bufferManager.getPage(dataPageId)
         print("page buffer 2 :",buffer2.pageId)

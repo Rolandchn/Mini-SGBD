@@ -50,8 +50,8 @@ class DiskManager:
         self.current_pageId = freePageId
 
         filename = os.path.join(dbpath, f"F{freePageId.fileIdx}.rsdb")
-
-
+        '''        pagebyte = self.config.pagesize * self.current_pageId.pageIdx
+        '''
         with open(filename, "wb") as f:
             for i in range(self.config.dm_maxfilesize):
                 f.write(b"#")
@@ -152,6 +152,8 @@ if __name__ == "__main__":
     config = DBconfig.LoadDBConfig(config_file)
     disk = DiskManager(config)
     buff = Buffer()
-
+    disk.LoadState()
+    pageId = disk.AllocPage()
+    print(pageId)
     disk.SaveState()
     
