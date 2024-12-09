@@ -56,7 +56,7 @@ class DiskManager:
         pagebyte = self.config.pagesize * freePageId.pageIdx
 
         with open(filename, "r+b") as f:
-            for i in range(self.config.dm.pagesize):
+            for i in range(self.config.pagesize):
                 f.seek(pagebyte, 0)
                 f.write(b"#")
 
