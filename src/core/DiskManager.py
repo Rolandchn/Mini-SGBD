@@ -24,44 +24,47 @@ class DiskManager:
         self.free_pageIds = []
 
 
-    def AllocPage(self) -> PageId:
+    def AllocPage(self):
         """ 
-        Opération: Cherche un pageId libre 
-        Sortie: Un pageId libre (nouveau ou existant) 
+        Alloue une nouvelle page et la remplit avec exactement `pagesize` caractères `#`.
         """
-        freePageId = None 
-
+        freePageId = None
         max_page = self.config.dm_maxfilesize // self.config.pagesize
-        if(self.free_pageIds != []): 
+
+        if self.free_pageIds:
             freePageId = self.free_pageIds.pop(0)
 
-        # Cas où c'est vide
-        elif(self.current_pageId is None):
+        elif self.current_pageId is None:
             self.current_pageId = PageId(0, 0)
             freePageId = self.current_pageId
 
-        # Cas où c'est au milieu d'une page, on incrémente
-        elif(self.current_pageId.pageIdx < max_page - 1):
+        elif self.current_pageId.pageIdx < max_page - 1:
             self.current_pageId = PageId(self.current_pageId.fileIdx, self.current_pageId.pageIdx + 1)
             freePageId = self.current_pageId
-            
-        # Cas où c'est la fin d'une page, on change de file
+
         else:
             self.current_pageId = PageId(self.current_pageId.fileIdx + 1, 0)
             freePageId = self.current_pageId
-        
 
         filename = os.path.join(dbpath, f"F{freePageId.fileIdx}.rsdb")
-        
-        pagebyte = self.config.pagesize * freePageId.pageIdx
+        page_start_byte = self.config.pagesize * freePageId.pageIdx
 
+        # Création du fichier si nécessaire
+        if not os.path.isfile(filename):
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            with open(filename, 'wb') as f:
+                pass
+
+        # Remplissage de la page allouée avec des #
         with open(filename, "r+b") as f:
-            for i in range(self.config.pagesize):
-                f.seek(pagebyte, 0)
-                f.write(b"#")
+            f.seek(page_start_byte, os.SEEK_SET)
 
+            f.write(b"#" * self.config.pagesize)
+        
 
         return freePageId
+
+
 
 
     def ReadPage(self, pageId:PageId, buffer:Buffer) -> None:
@@ -156,9 +159,8 @@ if __name__ == "__main__":
     config = DBconfig.LoadDBConfig(config_file)
     disk = DiskManager(config)
     buff = Buffer()
-    disk.LoadState()
-    page = disk.AllocPage()
-    print(page)
+    
     disk.SaveState()
+    
     
     

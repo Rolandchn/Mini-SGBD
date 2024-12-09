@@ -25,9 +25,10 @@ class Relation:
         try:
             file_path = script_dir / "../../storage/F0.rsdb"
             file_path.resolve()
-            self.headerPageId = PageId(0, 0) if file_path.is_file() else disk.AllocPage()
+            self.headerPageId = PageId(0, 0) if file_path.is_file() else self.disk.AllocPage()
         except Exception as e:
             print("Erreur :", e)
+            
         buffer = self.bufferManager.getPage(self.headerPageId)
         if(buffer.read_char() == "#"): 
             buffer.set_position(0)
@@ -197,24 +198,14 @@ class Relation:
         """ 
         
         """
-        buff1 = relation.bufferManager.getPage(PageId(0,1))
-        buff1.set_position(relation.disk.config.pagesize - 8 - 8 * relation.disk.config.nb_slots)
-        print("MMMM",buff1.read_int())
-        print("position début DDDD: ",buff1.read_int())
-        self.bufferManager.FlushBuffers()
-        
         buffer = self.bufferManager.getPage(self.headerPageId)
         dataPageId = self.disk.AllocPage()
-        buff1 = relation.bufferManager.getPage(PageId(0,1))
-        buff1.set_position(relation.disk.config.pagesize - 8 - 8 * relation.disk.config.nb_slots)
-        print("SSS",buff1.read_int())
-        print("position début SSS: ",buff1.read_int())
-        
         # MAJ header page
         buffer.set_position(0)
         n = buffer.read_int()
         buffer.set_position(0)
         buffer.put_int(n + 1)
+        print("n : ",n)
         buffer.set_position(12 * n + 4)
         buffer.put_int(dataPageId.fileIdx)
         buffer.put_int(dataPageId.pageIdx)
@@ -393,11 +384,14 @@ if __name__ == "__main__":
 
     print(op2)
     '''
-    relation.addDataPage()
-    buff1 = relation.bufferManager.getPage(PageId(0,1))
+    
+    buff1 = relation.bufferManager.getPage(PageId(2,3))
     buff1.set_position(relation.disk.config.pagesize - 8 - 8 * relation.disk.config.nb_slots)
-    print("M",buff1.read_int())
-    print("position début : ",buff1.read_int())
+    for _ in range(relation.disk.config.nb_slots):
+        print("M: ",buff1.read_int())
+        print("pos : " ,buff1.read_int())
+    print("nb sl :",buff1.read_int())
+    print("pos espace : ",buff1.read_int())
     buff2 = relation.bufferManager.getPage(PageId(0, 0))
     buff2.set_position(0)
     nb = buff2.read_int()
@@ -407,4 +401,5 @@ if __name__ == "__main__":
         print("Pidx : ",buff2.read_int())
         print("espace dispo : ",buff2.read_int())
     buff2.set_position(relation.disk.config.pagesize - 4)
+    
     bufferManager.disk.SaveState()
