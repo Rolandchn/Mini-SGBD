@@ -14,7 +14,7 @@ class BufferManager:
         self.disk = disk
         self.free_buffers: List[Buffer] = []
 
-        self.buffers = [Buffer() for i in range(config.bm_buffercount)]
+        self.buffers = [Buffer(size=config.pagesize) for _ in range(config.bm_buffercount)]
 
         self.CurrentReplacementPolicy = config.bm_policy[0] #LRU default 
 
@@ -133,12 +133,13 @@ class BufferManager:
         """
         for buffer in self.buffers:
             if buffer.dirty_flag:
+                print("flushing buffer", buffer.pageId)
                 self.disk.WritePage(buffer.pageId,buffer)
                 buffer.dirty_flag = False
             buffer.pin_count = 0
             buffer.pageId = None
 
-
+'''
 if __name__ == "__main__":
     bufferManager = BufferManager.setup("DBconfig.json")
     bufferManager.disk.LoadState()
@@ -146,7 +147,7 @@ if __name__ == "__main__":
     buff = bufferManager.getPage(PageId(2, 1))
     print(buff.read_int())
     print(buff.read_char())
-    
+   ''' 
 
 
 

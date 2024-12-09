@@ -7,6 +7,8 @@ from Buffer import Buffer
 from Record import Record
 from DiskManager import DiskManager
 from BufferManager import BufferManager
+import traceback 
+
 
 class Relation:
     def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo],
@@ -29,7 +31,9 @@ class Relation:
         if(buffer.read_char() == "#"): 
             buffer.set_position(0)
             buffer.put_int(0)
-            buffer.dirty_flag = True
+            bufferManager.disk.WritePage(self.headerPageId, buffer)
+            buffer.set_position(0)
+        bufferManager.disk.SaveState()
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
@@ -191,25 +195,40 @@ class Relation:
         """ 
         
         """
-        dataPageId = self.disk.AllocPage()
         buffer = self.bufferManager.getPage(self.headerPageId)
+        buffer.set_position(0)
+        n = buffer.read_int()
+        print(n)
+        dataPageId = self.disk.AllocPage()
+        print(dataPageId)
         # MAJ header page
-        try:
-            n = buffer.read_int()
-            buffer.set_position(0)
-            buffer.put_int(n + 1)
-            buffer.set_position(12 * n + 4)
-
-            buffer.put_int(dataPageId.fileIdx)
-            buffer.put_int(dataPageId.pageIdx)
+        print(self.headerPageId)
+        
+        buffer.set_position(0)
+        n = buffer.read_int()
+        print(n)
+        print(buffer.pageId)
+        buffer.set_position(0)
+        buffer.put_int(n + 1)
+        buffer.set_position(12 * n + 4)
+        buffer.put_int(dataPageId.fileIdx)
+        buffer.put_int(dataPageId.pageIdx)
+        m = self.disk.config.nb_slots
+        pageSize = self.disk.config.pagesize
+        buffer.put_int(pageSize - 8 * (m + 1))
+        buffer.dirty_flag = True
+        bufferManager.FlushBuffers()
             
-            m = self.disk.config.nb_slot
-            pageSize = self.disk.config.pagesize
-            buffer.put_int(pageSize - 8 * (m + 1))
-
-        except Exception as e:
-            print("Erreur :", e)
-
+        #Init data page
+        buffer2 = self.bufferManager.getPage(dataPageId)
+        buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
+        for _ in range(self.disk.config.nb_slots):
+            buffer2.put_int(-1)
+            buffer2.put_int(0)
+            
+        buffer2.put_int(self.disk.config.nb_slots)
+        buffer2.put_int(0)
+        bufferManager.disk.WritePage(dataPageId, buffer2)
     def getFreeDataPageId(self, sizeRecord):
         """ 
          
@@ -242,20 +261,7 @@ class Relation:
             if pageId == PageId(fidx, pidx):
                 break
 
-        # page vide, init data page
-        if buffer.read_int() == self.disk.config.pagesize:
-            buffer2 = self.bufferManager.getPage(pageId)
-            buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slot)
-            
-            for i in range(self.disk.config.nb_slot):
-                buffer2.put_int(-1)
-                buffer2.put_int(0)
-            
-            buffer2.put_int(self.disk.config.nb_slot)
-            buffer2.put_int(0)
-            buffer.set_position(buffer.__pos - 4)
-            buffer.put_int(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slot)
-
+        buffer2 = self.bufferManager.getPage(pageId)
         # write record
         buffer2.set_position(self.disk.config.pagesize - 4)
         position_debut = buffer2.read_int()
@@ -269,16 +275,16 @@ class Relation:
         
         # maj vert 1
         while buffer2.read_int() != -1:
-            buffer2.set_position(buffer.__pos - 12)
+            buffer2.set_position(buffer.getPos() - 12)
         
         # maj vert 2 
         buffer2.put_int(position_debut)
         buffer2.put_int(tailleRecord)
 
         # décrémenter nb octet libre
-        buffer.set_position(buffer.__pos - 4)
+        buffer.set_position(buffer.getPos() - 4)
         t2 = buffer.read_int()
-        buffer.set_position(buffer.__pos - 4)
+        buffer.set_position(buffer.getPos() - 4)
         buffer.put_int(t2 - tailleRecord)
 
         # incrementer jaune
@@ -288,7 +294,7 @@ class Relation:
         buffer.put_int(t3)
             
 
-        # position début Rec M: pagesize - 4 - 4 - 8 * nb_slot
+        # position début Rec M: pagesize - 4 - 4 - 8 * nb_slots
         # position début espace disponible = somme de toutes les tailles
 
 
@@ -300,11 +306,11 @@ class Relation:
         liste = []
 
         while buffer.read_int() != -1:
-            buffer.set_position(buffer.__pos - 4)
+            buffer.set_position(buffer.getPos() - 4)
             record = Record([])
             self.readFromBuffer(record, buffer, buffer.read_int()) 
             liste.append(record)       
-            buffer.set_position(buffer.__pos - 12)
+            buffer.set_position(buffer.getPos() - 12)
 
         return liste
     
@@ -320,7 +326,7 @@ class Relation:
             pidx = buffer.read_int()
 
             liste.append(PageId(fidx,pidx))
-            buffer.set_position(buffer.__pos + 4)
+            buffer.set_position(buffer.getPos() + 4)
 
         return liste
     
@@ -350,15 +356,15 @@ class Relation:
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
 
 if __name__ == "__main__":
-    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-
-    liste = [Column.ColumnInfo("test1", Column.Char(3)), Column.ColumnInfo("test2", Column.Int())]
-
-    relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
     
+    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
+    liste = [Column.ColumnInfo("test1", Column.Char(3)), Column.ColumnInfo("test2", Column.Int())]
+    bufferManager.disk.LoadState()
+    relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
+
     record1 = Record(["azt", 2])
 
-    buff = bufferManager.getPage(PageId(0, 0))
+    '''buff = bufferManager.getPage(PageId(0, 0))
 
     op1 = relation.writeRecordToBuffer(record1, buff, 0)
 
@@ -372,4 +378,17 @@ if __name__ == "__main__":
         print(x)
 
     print(op2)
-    
+    '''
+    print("")
+    print("")
+    print("")
+    #relation.addDataPage()
+    #relation.addDataPage()
+    buff2 = bufferManager.getPage(PageId(0, 0))
+    nb = buff2.read_int()
+    print("nb pages :", nb)
+    for _ in range(nb):
+        print("pageId :", PageId(buff2.read_int(), buff2.read_int()))
+        print("espace dispo :", buff2.read_int())
+
+    bufferManager.disk.SaveState()

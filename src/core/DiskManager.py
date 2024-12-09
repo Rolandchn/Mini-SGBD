@@ -30,7 +30,7 @@ class DiskManager:
         Sortie: Un pageId libre (nouveau ou existant) 
         """
         freePageId = None 
-
+        print("allocating page")
         if(self.free_pageIds != []): 
             freePageId = self.free_pageIds.pop(0)
 
@@ -85,7 +85,7 @@ class DiskManager:
         filename = os.path.join(dbpath, f"F{pageId.fileIdx}.rsdb")
         
         pagebyte = self.config.pagesize * pageId.pageIdx
-
+        print(f"Pagebyte: {pagebyte}")
         with open(filename, "r+b") as f:
             # Pointer au début de la page
             f.seek(pagebyte, 0)
@@ -95,7 +95,9 @@ class DiskManager:
 
             # Ecrire sur le fichier
             f.write(data)
-
+            f.flush()
+            os.fsync(f.fileno())
+            print(f"Data à écrire ({len(data)} octets) : {data}")
 
     def DeAllocPage(self, pageId:PageId) -> None:
         """
@@ -146,11 +148,9 @@ class DiskManager:
             print("Le fichier n'a pas été trouvé")
 
 
-
 if __name__ == "__main__":
     config = DBconfig.LoadDBConfig(config_file)
     disk = DiskManager(config)
     buff = Buffer()
 
-    disk.LoadState()
     disk.SaveState()
