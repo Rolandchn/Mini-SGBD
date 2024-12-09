@@ -31,6 +31,7 @@ class Relation:
         if(buffer.read_char() == "#"): 
             buffer.set_position(0)
             buffer.put_int(0)
+            #remplacer write page par un dirty = true
             bufferManager.disk.WritePage(self.headerPageId, buffer)
             buffer.set_position(0)
         bufferManager.disk.SaveState()
@@ -217,6 +218,7 @@ class Relation:
         pageSize = self.disk.config.pagesize
         buffer.put_int(pageSize - 8 * (m + 1))
         buffer.dirty_flag = True
+        #TODO free page au lieu de flushbuffers
         bufferManager.FlushBuffers()
             
         #Init data page
@@ -382,8 +384,7 @@ if __name__ == "__main__":
     print("")
     print("")
     print("")
-    #relation.addDataPage()
-    #relation.addDataPage()
+    
     buff2 = bufferManager.getPage(PageId(0, 0))
     nb = buff2.read_int()
     print("nb pages :", nb)
