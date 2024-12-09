@@ -52,10 +52,12 @@ class DiskManager:
         
 
         filename = os.path.join(dbpath, f"F{freePageId.fileIdx}.rsdb")
+        
+        pagebyte = self.config.pagesize * freePageId.pageIdx
 
-
-        with open(filename, "wb") as f:
-            for i in range(self.config.dm_maxfilesize):
+        with open(filename, "r+b") as f:
+            for i in range(self.config.dm.pagesize):
+                f.seek(pagebyte, 0)
                 f.write(b"#")
 
 
