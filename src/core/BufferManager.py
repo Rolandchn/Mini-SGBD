@@ -133,7 +133,6 @@ class BufferManager:
         """
         for buffer in self.buffers:
             if buffer.dirty_flag:
-                print("flushing buffer", buffer.pageId)
                 self.disk.WritePage(buffer.pageId,buffer)
                 buffer.dirty_flag = False
             buffer.pin_count = 0

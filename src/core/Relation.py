@@ -391,15 +391,18 @@ if __name__ == "__main__":
 
     print(op2)
     '''
-   
-    
-    
-    buff1 = relation.bufferManager.getPage(PageId(0, 2))
-    buff1.set_position(relation.disk.config.pagesize - 8)
+    relation.addDataPage()
+    buff1 = relation.bufferManager.getPage(PageId(0,1))
+    buff1.set_position(relation.disk.config.pagesize - 8 - 8 * relation.disk.config.nb_slots)
     print("M",buff1.read_int())
-    print("positio",buff1.read_int())
+    print("position début : ",buff1.read_int())
     buff2 = relation.bufferManager.getPage(PageId(0, 0))
     buff2.set_position(0)
-    print("Nb : ",buff2.read_int())
-    
+    nb = buff2.read_int()
+    print("Nb : ",nb)
+    for i in range(nb):
+        print("Fidx : ",buff2.read_int())
+        print("Pidx : ",buff2.read_int())
+        print("espace dispo : ",buff2.read_int())
+    buff2.set_position(relation.disk.config.pagesize - 4)
     bufferManager.disk.SaveState()

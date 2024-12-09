@@ -30,7 +30,6 @@ class DiskManager:
         Sortie: Un pageId libre (nouveau ou existant) 
         """
         freePageId = None 
-        print("allocating page")
         if(self.free_pageIds != []): 
             freePageId = self.free_pageIds.pop(0)
 
@@ -85,6 +84,7 @@ class DiskManager:
         filename = os.path.join(dbpath, f"F{pageId.fileIdx}.rsdb")
         
         pagebyte = self.config.pagesize * pageId.pageIdx
+        print(f"PageId: {pageId}")
         print(f"Pagebyte: {pagebyte}")
         with open(filename, "r+b") as f:
             # Pointer au début de la page
