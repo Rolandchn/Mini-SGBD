@@ -1,12 +1,10 @@
 from typing import List
-
+import os
 from Buffer import Buffer
 
 from PageId import PageId
 from DBconfig import DBconfig
 from DiskManager import DiskManager
-
-
 
 class BufferManager:
     def __init__(self, config:DBconfig, disk:DiskManager):
@@ -14,7 +12,7 @@ class BufferManager:
         self.disk = disk
         self.free_buffers: List[Buffer] = []
 
-        self.buffers = [Buffer() for i in range(config.bm_buffercount)]
+        self.buffers = [Buffer(size=config.pagesize) for _ in range(config.bm_buffercount)]
 
         self.CurrentReplacementPolicy = config.bm_policy[0] #LRU default 
 
@@ -140,13 +138,14 @@ class BufferManager:
 
 
 if __name__ == "__main__":
-    bufferManager = BufferManager.setup("DBconfig.json")
-    bufferManager.disk.LoadState()
-
-    buff = bufferManager.getPage(PageId(2, 1))
-    print(buff.read_int())
-    print(buff.read_char())
     
+    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
+    buff = bufferManager.getPage(PageId(0, 0))
+    print(buff.read_char())
+    print(buff.read_char())
+    print(buff.read_char())
+
+   
 
 
 

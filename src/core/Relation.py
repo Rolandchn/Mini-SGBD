@@ -1,13 +1,16 @@
 import os
 from typing import List
 import Column
-
+from pathlib import Path
 from PageId import PageId
 from Buffer import Buffer
 from Record import Record
 from DiskManager import DiskManager
 from BufferManager import BufferManager
+import traceback 
 
+#TODO rajouter des Flag dirty pour les pages modifiées
+#TODO liberer tout les buffers
 class Relation:
     def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo],
                 disk: DiskManager, bufferManager: BufferManager):
@@ -17,13 +20,23 @@ class Relation:
 
         self.disk = disk
         self.bufferManager = bufferManager
-    
         #init header page
-        self.headerPageId = disk.AllocPage()
+        script_dir = Path(__file__).parent
+        try:
+            file_path = script_dir / "../../storage/F0.rsdb"
+            file_path.resolve()
+            self.headerPageId = PageId(0, 0) if file_path.is_file() else self.disk.AllocPage()
+        except Exception as e:
+            print("Erreur :", e)
+            
         buffer = self.bufferManager.getPage(self.headerPageId)
-        buffer.put_int(0)
-    
-
+        if(buffer.read_char() == "#"): 
+            buffer.set_position(0)
+            buffer.put_int(0)
+            #remplacer write page par un dirty = true
+            bufferManager.disk.WritePage(self.headerPageId, buffer)
+            buffer.set_position(0)
+        self.bufferManager.disk.SaveState()
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
@@ -185,22 +198,37 @@ class Relation:
         """ 
         
         """
+        buffer = self.bufferManager.getPage(self.headerPageId)
         dataPageId = self.disk.AllocPage()
-        buffer = self.bufferManager.getPage(dataPageId)
-        
+        # MAJ header page
+        buffer.set_position(0)
         n = buffer.read_int()
-        buffer.set_position(12 * n)
-
-        buffer.put_int(dataPageId.fileIdx)
-        buffer.put_int(dataPageId.pageIdx)
-        
-        m = self.disk.config.nb_slot
-        pageSize = self.disk.config.pagesize
-        buffer.put_int(pageSize - 8 * (m + 1))
-
         buffer.set_position(0)
         buffer.put_int(n + 1)
-
+        print("n : ",n)
+        buffer.set_position(12 * n + 4)
+        buffer.put_int(dataPageId.fileIdx)
+        buffer.put_int(dataPageId.pageIdx)
+        m = self.disk.config.nb_slots
+        pageSize = self.disk.config.pagesize
+        buffer.put_int(pageSize - 8 * (m + 1))
+        buffer.dirty_flag = True
+        #TODO free page au lieu de flushbuffers
+        bufferManager.FlushBuffers()        
+        #Init data page
+        buffer2 = self.bufferManager.getPage(dataPageId)
+        print("page buffer 2 :",buffer2.pageId)
+        buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
+        for _ in range(self.disk.config.nb_slots):
+            buffer2.put_int(-1)
+            buffer2.put_int(0)
+            
+        buffer2.put_int(self.disk.config.nb_slots)
+        buffer2.put_int(0)
+        buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
+        
+        buffer2.dirty_flag = True
+        bufferManager.FlushBuffers()
 
     def getFreeDataPageId(self, sizeRecord):
         """ 
@@ -226,31 +254,20 @@ class Relation:
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
         N = buffer.read_int()
-
-        for i in range(N):
+        #????
+        '''for i in range(N):
             fidx = buffer.read_int()
             pidx = buffer.read_int()
+            buffer.set_position(buffer.getPos() + 4)
 
             if pageId == PageId(fidx, pidx):
-                break
-
-        # page vide, init data page
-        if buffer.read_int() == self.disk.config.pagesize:
-            buffer2 = self.bufferManager.getPage(pageId)
-            buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slot)
-            
-            for i in range(self.disk.config.nb_slot):
-                buffer2.put_int(-1)
-                buffer2.put_int(0)
-            
-            buffer2.put_int(self.disk.config.nb_slot)
-            buffer2.put_int(0)
-            buffer.set_position(buffer.__pos - 4)
-            buffer.put_int(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slot)
-
+                break'''
+        
+        buffer2 = self.bufferManager.getPage(pageId)
         # write record
         buffer2.set_position(self.disk.config.pagesize - 4)
         position_debut = buffer2.read_int()
+        print("position début :", position_debut)
         tailleRecord = self.writeRecordToBuffer(record, buffer2, position_debut)
 
         # maj rouge
@@ -261,16 +278,16 @@ class Relation:
         
         # maj vert 1
         while buffer2.read_int() != -1:
-            buffer2.set_position(buffer.__pos - 12)
+            buffer2.set_position(buffer.getPos() - 12)
         
         # maj vert 2 
         buffer2.put_int(position_debut)
         buffer2.put_int(tailleRecord)
 
         # décrémenter nb octet libre
-        buffer.set_position(buffer.__pos - 4)
+        buffer.set_position(buffer.getPos() - 4)
         t2 = buffer.read_int()
-        buffer.set_position(buffer.__pos - 4)
+        buffer.set_position(buffer.getPos() - 4)
         buffer.put_int(t2 - tailleRecord)
 
         # incrementer jaune
@@ -278,9 +295,11 @@ class Relation:
         t3 = buffer.read_int() + 1
         buffer.set_position(0)
         buffer.put_int(t3)
-            
+        self.bufferManager.FreePage(buffer2.pageId)
+        self.bufferManager.FreePage(buffer.pageId)
 
-        # position début Rec M: pagesize - 4 - 4 - 8 * nb_slot
+
+        # position début Rec M: pagesize - 4 - 4 - 8 * nb_slots
         # position début espace disponible = somme de toutes les tailles
 
 
@@ -292,11 +311,11 @@ class Relation:
         liste = []
 
         while buffer.read_int() != -1:
-            buffer.set_position(buffer.__pos - 4)
+            buffer.set_position(buffer.getPos() - 4)
             record = Record([])
             self.readFromBuffer(record, buffer, buffer.read_int()) 
             liste.append(record)       
-            buffer.set_position(buffer.__pos - 12)
+            buffer.set_position(buffer.getPos() - 12)
 
         return liste
     
@@ -312,7 +331,7 @@ class Relation:
             pidx = buffer.read_int()
 
             liste.append(PageId(fidx,pidx))
-            buffer.set_position(buffer.__pos + 4)
+            buffer.set_position(buffer.getPos() + 4)
 
         return liste
     
@@ -342,15 +361,15 @@ class Relation:
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
 
 if __name__ == "__main__":
-    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-
-    liste = [Column.ColumnInfo("test1", Column.Char(3)), Column.ColumnInfo("test2", Column.Int())]
-
-    relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
     
+    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
+    liste = [Column.ColumnInfo("test1", Column.Char(3)), Column.ColumnInfo("test2", Column.Int())]
+    bufferManager.disk.LoadState()
+    relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
+
     record1 = Record(["azt", 2])
 
-    buff = bufferManager.getPage(PageId(0, 0))
+    '''buff = bufferManager.getPage(PageId(0, 0))
 
     op1 = relation.writeRecordToBuffer(record1, buff, 0)
 
@@ -364,3 +383,23 @@ if __name__ == "__main__":
         print(x)
 
     print(op2)
+    '''
+    
+    buff1 = relation.bufferManager.getPage(PageId(2,3))
+    buff1.set_position(relation.disk.config.pagesize - 8 - 8 * relation.disk.config.nb_slots)
+    for _ in range(relation.disk.config.nb_slots):
+        print("M: ",buff1.read_int())
+        print("pos : " ,buff1.read_int())
+    print("nb sl :",buff1.read_int())
+    print("pos espace : ",buff1.read_int())
+    buff2 = relation.bufferManager.getPage(PageId(0, 0))
+    buff2.set_position(0)
+    nb = buff2.read_int()
+    print("Nb : ",nb)
+    for i in range(nb):
+        print("Fidx : ",buff2.read_int())
+        print("Pidx : ",buff2.read_int())
+        print("espace dispo : ",buff2.read_int())
+    buff2.set_position(relation.disk.config.pagesize - 4)
+    
+    bufferManager.disk.SaveState()
