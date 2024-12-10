@@ -22,12 +22,31 @@ class Relation:
         self.bufferManager = bufferManager
         #init header page
         script_dir = Path(__file__).parent
-        try:
-            file_path = script_dir / "../../storage/F0.rsdb"
-            file_path.resolve()
-            self.headerPageId = PageId(0, 0) if file_path.is_file() else self.disk.AllocPage()
-        except Exception as e:
-            print("Erreur :", e)
+        db_file_path = script_dir / "../../storage/db.json"
+
+        self.headerPageId = None
+
+        # Charger les données du fichier JSON
+        if db_file_path.is_file():
+            try:
+                with open(db_file_path, "r", encoding="utf-8") as db_file:
+                    data = json.load(db_file)
+                #cas où la relation existe déjà
+                for relation_data in data:
+                    #recherche par nom
+                    if relation_data["name"] == self.name:
+                        self.headerPageId = PageId(
+                            fileIdx=relation_data["headerPageId"]["fileIdx"],
+                            pageIdx=relation_data["headerPageId"]["pageIdx"]
+                        )
+                        break
+            except json.JSONDecodeError as e:
+                print("Erreur : ", e)
+
+        #Cas ou relation existe pas, allouer une nouvelle page
+        if self.headerPageId is None:
+            self.headerPageId = self.disk.AllocPage()
+
             
         buffer = self.bufferManager.getPage(self.headerPageId)
         if(buffer.read_char() == "#"): 
@@ -397,9 +416,9 @@ class Relation:
 if __name__ == "__main__":
     
     bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-    liste = [Column.ColumnInfo("test1", Column.Char(3)), Column.ColumnInfo("test2", Column.Int())]
+    liste = [Column.ColumnInfo("test", Column.VarChar(5)), Column.ColumnInfo("test2", Column.Int())]
     bufferManager.disk.LoadState()
-    relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
+    relation = Relation("test2", 2, liste, bufferManager.disk, bufferManager) 
 
     record1 = Record(["azt", 4])
     record2 = Record([])
@@ -419,7 +438,11 @@ if __name__ == "__main__":
 
     print(op2)
     '''    
-    relation.readFromBuffer(record2, bufferManager.getPage(PageId(0, 1)), 0)
-    print(record2.values)
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.addDataPage()
     relation.saveRelation()
     bufferManager.disk.SaveState()

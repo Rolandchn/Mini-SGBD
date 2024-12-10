@@ -6,8 +6,8 @@
             {
                 "name": "test1",
                 "type": {
-                    "type": "Char",
-                    "size": 3
+                    "type": "VarChar",
+                    "size": 5
                 }
             },
             {
@@ -20,6 +20,54 @@
         ],
         "headerPageId": {
             "fileIdx": 0,
+            "pageIdx": 0
+        }
+    },
+    {
+        "name": "test1",
+        "nb_columns": 2,
+        "columns": [
+            {
+                "name": "test",
+                "type": {
+                    "type": "VarChar",
+                    "size": 5
+                }
+            },
+            {
+                "name": "test2",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            }
+        ],
+        "headerPageId": {
+            "fileIdx": 0,
+            "pageIdx": 1
+        }
+    },
+    {
+        "name": "test2",
+        "nb_columns": 2,
+        "columns": [
+            {
+                "name": "test",
+                "type": {
+                    "type": "VarChar",
+                    "size": 5
+                }
+            },
+            {
+                "name": "test2",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            }
+        ],
+        "headerPageId": {
+            "fileIdx": 2,
             "pageIdx": 0
         }
     }
