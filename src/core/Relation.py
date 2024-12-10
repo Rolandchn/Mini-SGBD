@@ -254,14 +254,15 @@ class Relation:
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
         N = buffer.read_int()
-        #????
-        '''for i in range(N):
+        
+        #avancer la position du buffer vers la page souhaitée
+        for i in range(N):
             fidx = buffer.read_int()
             pidx = buffer.read_int()
             buffer.set_position(buffer.getPos() + 4)
 
             if pageId == PageId(fidx, pidx):
-                break'''
+                break
         
         buffer2 = self.bufferManager.getPage(pageId)
         # write record
@@ -290,13 +291,11 @@ class Relation:
         buffer.set_position(buffer.getPos() - 4)
         buffer.put_int(t2 - tailleRecord)
 
-        # incrementer jaune
-        buffer.set_position(0)
-        t3 = buffer.read_int() + 1
-        buffer.set_position(0)
-        buffer.put_int(t3)
-        self.bufferManager.FreePage(buffer2.pageId)
-        self.bufferManager.FreePage(buffer.pageId)
+        
+        buffer.dirty_flag = True
+        buffer2.dirty_flag = True
+
+        self.bufferManager.FlushBuffers()
 
 
         # position début Rec M: pagesize - 4 - 4 - 8 * nb_slots
@@ -368,7 +367,8 @@ if __name__ == "__main__":
     relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
 
     record1 = Record(["azt", 2])
-
+    record2 = Record([])
+    
     '''buff = bufferManager.getPage(PageId(0, 0))
 
     op1 = relation.writeRecordToBuffer(record1, buff, 0)
@@ -383,23 +383,8 @@ if __name__ == "__main__":
         print(x)
 
     print(op2)
-    '''
-    
-    buff1 = relation.bufferManager.getPage(PageId(2,3))
-    buff1.set_position(relation.disk.config.pagesize - 8 - 8 * relation.disk.config.nb_slots)
-    for _ in range(relation.disk.config.nb_slots):
-        print("M: ",buff1.read_int())
-        print("pos : " ,buff1.read_int())
-    print("nb sl :",buff1.read_int())
-    print("pos espace : ",buff1.read_int())
-    buff2 = relation.bufferManager.getPage(PageId(0, 0))
-    buff2.set_position(0)
-    nb = buff2.read_int()
-    print("Nb : ",nb)
-    for i in range(nb):
-        print("Fidx : ",buff2.read_int())
-        print("Pidx : ",buff2.read_int())
-        print("espace dispo : ",buff2.read_int())
-    buff2.set_position(relation.disk.config.pagesize - 4)
+    '''    
+    relation.readFromBuffer(record2, bufferManager.getPage(PageId(0, 1)), 0)
+    print(record2.values)
     
     bufferManager.disk.SaveState()
