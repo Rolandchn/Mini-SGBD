@@ -408,7 +408,67 @@ class Relation:
         
         with open(db_file_path, "w", encoding="utf-8") as db_file:
             json.dump(data, db_file, indent=4, ensure_ascii=False)
+            
+    @classmethod
+    def loadRelation(cls, name: str, diskManager, bufferManager, db_file_path: str = "../../storage/db.json"):
+        from pathlib import Path
+        import json
 
+        script_dir = Path(__file__).parent
+        full_path = script_dir / db_file_path
+
+        if not full_path.is_file():
+            raise FileNotFoundError(f"fichier {db_file_path} est introuvable.")
+
+        try:
+            # Charger le fichier JSON
+            with open(full_path, "r", encoding="utf-8") as db_file:
+                data = json.load(db_file)
+
+            # Rechercher la relation
+            for relation_data in data:
+                if relation_data["name"] == name:
+                    columns = []
+                    for col_data in relation_data["columns"]:
+                        col_type = col_data["type"]["type"]
+                        size = col_data["type"]["size"]
+
+                        if col_type == "Int":
+                            column_type = Column.Int(size)
+                        elif col_type == "Float":
+                            column_type = Column.Float(size)
+                        elif col_type == "Char":
+                            column_type = Column.Char(size)
+                        elif col_type == "VarChar":
+                            column_type = Column.VarChar(size)
+                        else:
+                            raise ValueError(f"Type de colonne inconnu : {col_type}")
+
+                        column_info = Column.ColumnInfo(name=col_data["name"], type=column_type)
+                        columns.append(column_info)
+
+                    headerPageId = PageId(
+                        fileIdx=relation_data["headerPageId"]["fileIdx"],
+                        pageIdx=relation_data["headerPageId"]["pageIdx"]
+                    )
+
+                    relation = cls(
+                        name=relation_data["name"],
+                        nb_column=relation_data["nb_columns"],
+                        columns=columns,
+                        disk=diskManager,
+                        bufferManager=bufferManager
+                    )
+
+                    relation.headerPageId = headerPageId
+
+                    return relation
+
+            # Si aucune relation n'est trouvée
+            raise ValueError(f"Relation '{name}' non trouvée")
+
+        except json.JSONDecodeError:
+            raise ValueError("fichier JSON non conforme")
 
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
@@ -418,11 +478,13 @@ if __name__ == "__main__":
     bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
     liste = [Column.ColumnInfo("test", Column.VarChar(5)), Column.ColumnInfo("test2", Column.Int())]
     bufferManager.disk.LoadState()
-    relation = Relation("test2", 2, liste, bufferManager.disk, bufferManager) 
+    #relation = Relation("test2", 2, liste, bufferManager.disk, bufferManager) 
 
     record1 = Record(["azt", 4])
     record2 = Record([])
-    
+    relation = Relation.loadRelation("test1", bufferManager.disk, bufferManager)
+    print(f"Relation loaded: {relation.name}, Columns: {relation.nb_column}, HeaderPageId: {relation.headerPageId}")
+
     '''buff = bufferManager.getPage(PageId(0, 0))
 
     op1 = relation.writeRecordToBuffer(record1, buff, 0)
