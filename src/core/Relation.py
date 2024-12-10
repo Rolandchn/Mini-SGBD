@@ -8,7 +8,7 @@ from Record import Record
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 import traceback 
-
+import json
 #TODO rajouter des Flag dirty pour les pages modifiées
 #TODO liberer tout les buffers
 class Relation:
@@ -356,6 +356,41 @@ class Relation:
 
         return liste2
 
+    def saveRelation(self):
+        relation_data = {
+            "name": self.name,
+            "nb_columns": self.nb_column,
+            "columns": [column.to_dict() for column in self.columns],  
+            "headerPageId": {"fileIdx": self.headerPageId.fileIdx, "pageIdx": self.headerPageId.pageIdx}
+        }
+        
+        script_dir = Path(__file__).parent
+        db_file_path = script_dir / "../../storage/db.json"
+        
+        if db_file_path.is_file():
+            try:
+                with open(db_file_path, "r", encoding="utf-8") as db_file:
+                    data = json.load(db_file)
+            except json.JSONDecodeError:
+                data = []  
+        else:
+            data = []
+        
+        
+        updated = False
+        for relation in data:
+            if relation["name"] == self.name:
+                relation.update(relation_data)
+                updated = True
+                break
+        
+        if not updated:
+            data.append(relation_data)
+        
+        with open(db_file_path, "w", encoding="utf-8") as db_file:
+            json.dump(data, db_file, indent=4, ensure_ascii=False)
+
+
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
 
@@ -366,7 +401,7 @@ if __name__ == "__main__":
     bufferManager.disk.LoadState()
     relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
 
-    record1 = Record(["azt", 2])
+    record1 = Record(["azt", 4])
     record2 = Record([])
     
     '''buff = bufferManager.getPage(PageId(0, 0))
@@ -386,5 +421,5 @@ if __name__ == "__main__":
     '''    
     relation.readFromBuffer(record2, bufferManager.getPage(PageId(0, 1)), 0)
     print(record2.values)
-    
+    relation.saveRelation()
     bufferManager.disk.SaveState()

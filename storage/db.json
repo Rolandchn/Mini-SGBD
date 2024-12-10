@@ -1,0 +1,26 @@
+[
+    {
+        "name": "test",
+        "nb_columns": 2,
+        "columns": [
+            {
+                "name": "test1",
+                "type": {
+                    "type": "Char",
+                    "size": 3
+                }
+            },
+            {
+                "name": "test2",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            }
+        ],
+        "headerPageId": {
+            "fileIdx": 0,
+            "pageIdx": 0
+        }
+    }
+]
