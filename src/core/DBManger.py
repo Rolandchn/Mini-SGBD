@@ -1,7 +1,13 @@
 from typing import Optional, List
 from Database import Database 
 from Relation import Relation
-
+import os
+from pathlib import Path
+from DBconfig import DBconfig   
+from BufferManager import BufferManager
+from Column import ColumnInfo
+import Column
+import json
 class DBManager:
     def __init__(self, db_config):
         self.databases = {}  # Dictionnaire pour stocker les bases de données
@@ -11,8 +17,12 @@ class DBManager:
     #Création d'une base de données
     def createDatabase(self, name: str):
         if name not in self.databases:
+            print("database created")
             self.databases[name] = Database(name)
-
+        else:
+            raise ValueError("La base de données existe déjà")
+        
+            
     #Activer une base de données
     def setCurrentDatabase(self, name: str):
         if name in self.databases:
@@ -21,6 +31,7 @@ class DBManager:
     #Ajouter des tuples à la table active
     def addTableToCurrentDatabase(self, table: Relation):
         if self.current_database:
+            print("table added")
             self.databases[self.current_database].addTable(table)
 
     #Retourner une table dans la BDD en cour(Active)
@@ -61,20 +72,65 @@ class DBManager:
         return []
 
     def saveState(self):
-        # Écrire les enregistrements dans les buffers
-        for db_name, db in self.databases.items():
-            for table_name, table in db.tables.items():
-                data_pages = table.getDataPages()
-                for page_id in data_pages:
-                    buffer = self.bufferManager.getPage(page_id)
-                    records = table.getRecordsInDataPage(page_id)
-                    pos = 0  # Position initiale dans le buffer
-                    for record in records:
-                        pos += table.writeRecordToBuffer(record, buffer, pos)
-                    self.bufferManager.FreePage(page_id)
+        # Chemin vers le fichier JSON principal
+        file_path = os.path.join(os.path.dirname(__file__), "..", "..", "storage", "db.save.json")
 
-    def loadState(self):
-        # Implémentez le chargement de l'état des bases de données
-        pass
+        # Charger les bases de données existantes à partir du fichier s'il existe
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
+                try:
+                    saved_data = json.load(file)
+                except json.JSONDecodeError:
+                    saved_data = []
+        else:
+            saved_data = []
+
+        # Identifier les bases de données nécessitant une sauvegarde (nouvelles ou modifiées)
+        saved_names = set(saved_data)
+        to_save_databases = []
+
+        for name, database in self.databases.items():
+            # Vérifier si le fichier de la base de données existe déjà
+            filename = f"{name}.json"
+            db_file_path = os.path.join(os.path.dirname(__file__), "..", "..", "storage", "database", filename)
+            db_exists = os.path.exists(db_file_path)
+
+            if not db_exists:
+                with open(db_file_path, 'w') as file:
+                    json.dump([], file)
+            # Vérifier si la base de données est nouvelle, modifiée, ou si son fichier n'existe pas
+            for table_name, table in database.tables.items():
+                database.saveRelation(table)
+
+                # Marquer la base de données comme sauvegardée
+            database.markAsSaved()
+
+        # Mettre à jour le fichier JSON principal (db.save.json)
+        if to_save_databases:
+            saved_data.extend(name for name in to_save_databases if name not in saved_names)
+            with open(file_path, 'w') as file:
+                json.dump(saved_data, file, indent=4)
 
 #tous les méthode remove doit etre revu !!!!
+if __name__ == "__main__":
+    liste = [Column.ColumnInfo("test1", Column.VarChar(5)), Column.ColumnInfo("test2", Column.Int())]
+    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
+    bufferManager.disk.LoadState()
+    db_manager = DBManager(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
+    db_manager.createDatabase("db1")
+    db_manager.createDatabase("db2")
+    db_manager.setCurrentDatabase("db1")
+    db_manager.createDatabase("db3")
+    db_manager.removeDatabase("db1")
+    db_manager.removeDatabase("db3")
+    print(db_manager.listDatabases())
+    db_manager.setCurrentDatabase("db2")
+    print(db_manager.listDatabases())
+    script_dir = Path(__file__).parent
+    db_file_path = script_dir / "../../storage/database/test1.json"
+    db_manager.addTableToCurrentDatabase(Relation.loadRelation("test6",bufferManager.disk, bufferManager,"db2"))
+    db_manager.addTableToCurrentDatabase(Relation.loadRelation("test4",bufferManager.disk, bufferManager,"db2"))
+    print(db_manager.listTablesInCurrentDatabase())
+    db_manager.listTablesInCurrentDatabase()
+    print(db_manager.listTablesInCurrentDatabase())
+    db_manager.saveState()
