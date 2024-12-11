@@ -11,7 +11,7 @@ config_file = os.path.join(current_dir, "..", "config", "DBconfig.json")
 
 savefile = os.path.join(current_dir, "..", "config", "dm.save.json")
 
-config = DBconfig.LoadDBConfig(config_file)  # Pass the path as a string
+config = DBconfig.LoadDBConfig(config_file) 
 
 
 dbpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", config.dbpath, "datafiles"))
