@@ -14,7 +14,7 @@ savefile = os.path.join(current_dir, "..", "config", "dm.save.json")
 config = DBconfig.LoadDBConfig(config_file)  # Pass the path as a string
 
 
-dbpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", config.dbpath))
+dbpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", config.dbpath, "datafiles"))
 os.makedirs(dbpath, exist_ok=True)
 
 class DiskManager:
@@ -159,6 +159,7 @@ if __name__ == "__main__":
     config = DBconfig.LoadDBConfig(config_file)
     disk = DiskManager(config)
     buff = Buffer()
+    disk.LoadState()
     
     disk.SaveState()
     
