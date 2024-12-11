@@ -1,12 +1,12 @@
 from typing import Optional
-from DBManger from DBManger
+from DBManger import DBManager
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 from DBconfig import DBconfig
 from Column import ColumnInfo
 
 class SGBD:
-    def __init__(self, db_config: DBConfig):
+    def __init__(self, db_config:DBconfig):
         self.db_config = db_config
         self.disk_manager = DiskManager(db_config)
         self.buffer_manager = BufferManager(db_config, self.disk_manager)
