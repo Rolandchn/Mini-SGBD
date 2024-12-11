@@ -5,6 +5,7 @@ from BufferManager import BufferManager
 from DBconfig import DBconfig
 from Column import ColumnInfo
 import Column
+from Relation import Relation
 
 
 class SGBD:
