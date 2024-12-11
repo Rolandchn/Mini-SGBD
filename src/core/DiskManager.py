@@ -31,34 +31,37 @@ class DiskManager:
         """
         freePageId = None 
 
+        max_page = self.config.dm_maxfilesize // self.config.pagesize
         if(self.free_pageIds != []): 
             freePageId = self.free_pageIds.pop(0)
 
-        max_page = self.config.dm_maxfilesize // self.config.pagesize
-
         # Cas où c'est vide
-        if(self.current_pageId is None):
-            freePageId = PageId(0, 0)
+        elif(self.current_pageId is None):
+            self.current_pageId = PageId(0, 0)
+            freePageId = self.current_pageId
 
         # Cas où c'est au milieu d'une page, on incrémente
         elif(self.current_pageId.pageIdx < max_page - 1):
-            freePageId = PageId(self.current_pageId.fileIdx, self.current_pageId.pageIdx + 1)
+            self.current_pageId = PageId(self.current_pageId.fileIdx, self.current_pageId.pageIdx + 1)
+            freePageId = self.current_pageId
             
         # Cas où c'est la fin d'une page, on change de file
         else:
-            freePageId = PageId(self.current_pageId.fileIdx + 1, 0)
+            self.current_pageId = PageId(self.current_pageId.fileIdx + 1, 0)
+            freePageId = self.current_pageId
         
-        self.current_pageId = freePageId
 
         filename = os.path.join(dbpath, f"F{freePageId.fileIdx}.rsdb")
+        
+        pagebyte = self.config.pagesize * freePageId.pageIdx
 
-
-        with open(filename, "wb") as f:
-            for i in range(self.config.dm_maxfilesize):
+        with open(filename, "r+b") as f:
+            for i in range(self.config.dm.pagesize):
+                f.seek(pagebyte, 0)
                 f.write(b"#")
 
 
-        return self.current_pageId
+        return freePageId
 
 
     def ReadPage(self, pageId:PageId, buffer:Buffer) -> None:
@@ -151,6 +154,7 @@ if __name__ == "__main__":
     config = DBconfig.LoadDBConfig(config_file)
     disk = DiskManager(config)
     buff = Buffer()
-
     disk.LoadState()
+    page = disk.AllocPage()
+    print(page)
     disk.SaveState()

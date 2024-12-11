@@ -8,30 +8,34 @@ class Base:
             assert isinstance(getattr(self, value), value_type)
 
 
+
 @dataclass
-class Number:
-    type: int | float
+class Int:
     size: int = 4
 
+@dataclass
+class Float:
+    size: int = 4
 
 @dataclass
 class Char:
     size: int
-    var: bool = False
 
+
+@dataclass
+class VarChar:
+    size: int
 
 @dataclass
 class ColumnInfo(Base):
     name: str
-    type: Number | Char
+    type: Int | Float | Char | VarChar
 
 
 if __name__ == "__main__":
-    c = Char(20)
-    cv = Char(20, var=True)
-    n = Number(int)
-    f = Number(float)
+    c = Char(40)
+    vc = VarChar(40)
+    i = Int()
+    f = Float()
 
-    column_info = ColumnInfo("test", c)
-
-    print(isinstance(c, Char))
+    print(i)
