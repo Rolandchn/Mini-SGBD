@@ -374,7 +374,7 @@ class Relation:
 
         return liste2
 
-    def saveRelation(self, db_file_path):
+    '''def saveRelation(self, db_file_path):
         relation_data = {
             "name": self.name,
             "nb_columns": self.nb_column,
@@ -404,7 +404,7 @@ class Relation:
         
         with open(db_file_path, "w", encoding="utf-8") as db_file:
             json.dump(data, db_file, indent=4, ensure_ascii=False)
-            
+            '''
     @classmethod
     def loadRelation(cls, name: str, diskManager, bufferManager, nomBD):
         from pathlib import Path
