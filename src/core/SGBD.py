@@ -114,7 +114,7 @@ class SGBD:
             print(table)
 
     @staticmethod
-    def parseColumns(columns_str: str) -> List[ColumnInfo]:
+    def parseColumns(columns_str: str) -> list[ColumnInfo]:
         columns = []
         column_parts = columns_str[1:-1].split(",")
         for column_part in column_parts:
