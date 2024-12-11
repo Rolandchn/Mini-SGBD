@@ -4,6 +4,8 @@ from DiskManager import DiskManager
 from BufferManager import BufferManager
 from DBconfig import DBconfig
 from Column import ColumnInfo
+import Column
+
 
 class SGBD:
     def __init__(self, db_config:DBconfig):
@@ -118,13 +120,13 @@ class SGBD:
         for column_part in column_parts:
             name, type_str = column_part.split(":")
             if type_str == "INT":
-                columns.append(ColumnInfo(name, Number()))
+                columns.append(ColumnInfo(name, Column.Int()))
             elif type_str == "REAL":
-                columns.append(ColumnInfo(name, Number()))
+                columns.append(ColumnInfo(name, Column.Float()))
             elif type_str.startswith("CHAR("):
                 size = int(type_str[5:-1])
-                columns.append(ColumnInfo(name, Char(size)))
+                columns.append(ColumnInfo(name, Column.Char(size)))
             elif type_str.startswith("VARCHAR("):
                 size = int(type_str[8:-1])
-                columns.append(ColumnInfo(name, Char(size, var=True)))
+                columns.append(ColumnInfo(name, Column.VarChar(size)))
         return columns
