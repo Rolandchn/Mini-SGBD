@@ -378,9 +378,9 @@ class Relation:
         for _ in range(nb):
             fidx = headerPage.read_int()
             pidx = headerPage.read_int()
-            self.disk.FreePage(PageId(fidx, pidx))
+            self.disk.DeAllocPage(PageId(fidx, pidx))
             headerPage.set_position(headerPage.getPos() + 4)
-        
+        self.disk.DeAllocPage(self.headerPageId)
 
     '''def saveRelation(self, db_file_path):
         relation_data = {
@@ -486,9 +486,9 @@ if __name__ == "__main__":
     script_dir = Path(__file__).parent
     db_file_path = script_dir / "../../storage/database/test1.json"
     record1 = Record(["azt", 4])
-    relation = Relation("test6", 2, liste, bufferManager.disk, bufferManager) 
+    #relation = Relation("test6", 2, liste, bufferManager.disk, bufferManager) 
     record2 = Record([])
-    #relation = Relation.loadRelation("test1", bufferManager.disk, bufferManager, db_file_path)
+    relation = Relation.loadRelation("test6", bufferManager.disk, bufferManager, "A")
     print(f"Relation loaded: {relation.name}, Columns: {relation.nb_column}, HeaderPageId: {relation.headerPageId}")
 
     buff = bufferManager.getPage(PageId(0, 0))
@@ -512,7 +512,6 @@ if __name__ == "__main__":
     relation.addDataPage()
     relation.addDataPage()
     relation.addDataPage()
-    relation.saveRelation(db_file_path)
-    bufferManager.disk.SaveState()'''
+    bufferManager.disk.SaveState()
     
     

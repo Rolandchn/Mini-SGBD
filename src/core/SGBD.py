@@ -59,6 +59,12 @@ class SGBD:
                 self.processListDatabasesCommand()
             elif parts[1].upper() == "TABLES":
                 self.processListTablesCommand()
+        elif cmd == "INSERT":        
+            self.processInsertCommand(parts[1:])
+        elif cmd == "BULKINSERT":
+            self.processBulkInsertCommand(parts[1:])
+        elif cmd == "SELECT":
+            self.processSelectCommand(parts[1:])
         else:
             print("Unknown command")
 
@@ -135,6 +141,50 @@ class SGBD:
         return columns
     
     
+    @staticmethod
+    def parseValues(columns_str: str) -> list[ColumnInfo]:
+        columns = []
+        column_parts = columns_str[1:-1].split(",")
+        for column_part in column_parts:
+                columns.append(column_part)
+                
+        return columns
+    
+    
+    #TP 7 START GO GO GO 
+    def processInsertCommand(self,reste: list[str]):
+        # Récupérer la table de la base de données courante
+            if reste[0].upper() == "INTO" and reste[2].upper() == "VALUES":
+                table = self.db_manager.getTableFromCurrentDatabase(reste[1])
+                if table is None:
+                    print(f"Table {reste[1]} does not exist.")
+                    return
+                # Vérifier que le nombre de valeurs correspond au nombre de colonnes
+                values = self.parseValues(reste[3])
+                if len(values) != table.nb_column:
+                    print(f"Number of values does not match the number of columns in table {reste[1]}.")
+                    return
+                # Convertir les valeurs en types appropriés
+                typed_values = []
+                for i, value in enumerate(values):
+                    column_type = table.columns[i].type
+                    if column_type == Column.Int():
+                        typed_values.append(int(value))
+                    elif column_type == Column.Float():
+                        typed_values.append(float(value))
+                    elif column_type == Column.Char(column_type.size) and len(value) == column_type.size:
+                        typed_values.append(value)
+                    elif column_type == Column.VarChar(column_type.size) and len(value) <= column_type.size:
+                        typed_values.append(value)
+                    else:
+                        print("Invalid column type.")
+                        return
+                print(typed_values)
+                # Insérer le tuple dans la table
+                table.InsertRecord(typed_values)
+                print(f"Record inserted into table {reste[1]}.")
+            else:
+                print("Invalid INSERT command.")
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
     sgbd.run()
