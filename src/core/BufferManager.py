@@ -135,19 +135,3 @@ class BufferManager:
                 buffer.dirty_flag = False
             buffer.pin_count = 0
             buffer.pageId = None
-
-
-if __name__ == "__main__":
-    
-    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-    buff = bufferManager.getPage(PageId(0, 0))
-    print(buff.read_char())
-    print(buff.read_char())
-    print(buff.read_char())
-
-   
-
-
-
-
-    #Est-on sensé rajouter un read a partir du disque dans le getPageL

@@ -8,7 +8,7 @@ from Record import Record
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 import traceback 
-
+import json
 #TODO rajouter des Flag dirty pour les pages modifiées
 #TODO liberer tout les buffers
 class Relation:
@@ -20,14 +20,32 @@ class Relation:
 
         self.disk = disk
         self.bufferManager = bufferManager
-        #init header page
-        script_dir = Path(__file__).parent
-        try:
-            file_path = script_dir / "../../storage/F0.rsdb"
-            file_path.resolve()
-            self.headerPageId = PageId(0, 0) if file_path.is_file() else self.disk.AllocPage()
-        except Exception as e:
-            print("Erreur :", e)
+        #A voir si on garde ou pas
+        '''db_file_path = Path(__file__).parent / "../../storage/database" / f"{name}.json"
+        self.db_file_path = db_file_path'''
+
+        self.headerPageId = None
+
+        # Charger les données du fichier JSON (a voir si on garde ou pas)
+        '''if db_file_path.is_file():
+            try:
+                with open(db_file_path, "r", encoding="utf-8") as db_file:
+                    data = json.load(db_file)
+                #cas où la relation existe déjà
+                for relation_data in data:
+                    #recherche par nom
+                    if relation_data["name"] == self.name:
+                        self.headerPageId = PageId(
+                            fileIdx=relation_data["headerPageId"]["fileIdx"],
+                            pageIdx=relation_data["headerPageId"]["pageIdx"]
+                        )
+                        break
+            except json.JSONDecodeError as e:
+                print("Erreur : ", e)
+        '''
+        #Cas ou relation existe pas, allouer une nouvelle page
+        if self.headerPageId is None:
+            self.headerPageId = self.disk.AllocPage()
             
         buffer = self.bufferManager.getPage(self.headerPageId)
         if(buffer.read_char() == "#"): 
@@ -205,7 +223,6 @@ class Relation:
         n = buffer.read_int()
         buffer.set_position(0)
         buffer.put_int(n + 1)
-        print("n : ",n)
         buffer.set_position(12 * n + 4)
         buffer.put_int(dataPageId.fileIdx)
         buffer.put_int(dataPageId.pageIdx)
@@ -214,10 +231,9 @@ class Relation:
         buffer.put_int(pageSize - 8 * (m + 1))
         buffer.dirty_flag = True
         #TODO free page au lieu de flushbuffers
-        bufferManager.FlushBuffers()        
+        self.bufferManager.FlushBuffers()        
         #Init data page
         buffer2 = self.bufferManager.getPage(dataPageId)
-        print("page buffer 2 :",buffer2.pageId)
         buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
         for _ in range(self.disk.config.nb_slots):
             buffer2.put_int(-1)
@@ -228,7 +244,7 @@ class Relation:
         buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
         
         buffer2.dirty_flag = True
-        bufferManager.FlushBuffers()
+        self.bufferManager.FlushBuffers()
 
     def getFreeDataPageId(self, sizeRecord):
         """ 
@@ -268,7 +284,6 @@ class Relation:
         # write record
         buffer2.set_position(self.disk.config.pagesize - 4)
         position_debut = buffer2.read_int()
-        print("position début :", position_debut)
         tailleRecord = self.writeRecordToBuffer(record, buffer2, position_debut)
 
         # maj rouge
@@ -331,7 +346,7 @@ class Relation:
 
             liste.append(PageId(fidx,pidx))
             buffer.set_position(buffer.getPos() + 4)
-
+            
         return liste
     
     def InsertRecord(self, record):
@@ -341,7 +356,7 @@ class Relation:
 
         liste = []
 
-        for i in range(N):
+        for _ in range(N):
             fidx = buffer.read_int()
             pidx = buffer.read_int()
 
@@ -356,20 +371,116 @@ class Relation:
 
         return liste2
 
+    '''def saveRelation(self, db_file_path):
+        relation_data = {
+            "name": self.name,
+            "nb_columns": self.nb_column,
+            "columns": [column.to_dict() for column in self.columns],  
+            "headerPageId": {"fileIdx": self.headerPageId.fileIdx, "pageIdx": self.headerPageId.pageIdx}
+        }
+        
+        if db_file_path.is_file():
+            try:
+                with open(db_file_path, "r", encoding="utf-8") as db_file:
+                    data = json.load(db_file)
+            except json.JSONDecodeError:
+                data = []  
+        else:
+            data = []
+        
+        
+        updated = False
+        for relation in data:
+            if relation["name"] == self.name:
+                relation.update(relation_data)
+                updated = True
+                break
+        
+        if not updated:
+            data.append(relation_data)
+        
+        with open(db_file_path, "w", encoding="utf-8") as db_file:
+            json.dump(data, db_file, indent=4, ensure_ascii=False)
+            '''
+    @classmethod
+    def loadRelation(cls, name: str, diskManager, bufferManager, nomBD):
+        from pathlib import Path
+        import json
+
+
+        full_path = Path(__file__).parent / ".." / ".." / "storage" / "database" / f"{nomBD}.json"
+        full_path = full_path.resolve()
+
+        if not full_path.is_file():
+            raise FileNotFoundError(f"fichier introuvable.")
+
+        try:
+            # Charger le fichier JSON
+            with open(full_path, "r", encoding="utf-8") as db_file:
+                data = json.load(db_file)
+
+            # Rechercher la relation
+            for relation_data in data:
+                if relation_data["name"] == name:
+                    columns = []
+                    for col_data in relation_data["columns"]:
+                        col_type = col_data["type"]["type"]
+                        size = col_data["type"]["size"]
+
+                        if col_type == "Int":
+                            column_type = Column.Int(size)
+                        elif col_type == "Float":
+                            column_type = Column.Float(size)
+                        elif col_type == "Char":
+                            column_type = Column.Char(size)
+                        elif col_type == "VarChar":
+                            column_type = Column.VarChar(size)
+                        else:
+                            raise ValueError(f"Type de colonne inconnu : {col_type}")
+
+                        column_info = Column.ColumnInfo(name=col_data["name"], type=column_type)
+                        columns.append(column_info)
+
+                    headerPageId = PageId(
+                        fileIdx=relation_data["headerPageId"]["fileIdx"],
+                        pageIdx=relation_data["headerPageId"]["pageIdx"]
+                    )
+
+                    relation = cls.__new__(cls)
+
+                    relation.name = relation_data["name"]
+                    relation.nb_column = relation_data["nb_columns"]
+                    relation.columns = columns
+                    relation.disk = diskManager
+                    relation.bufferManager = bufferManager
+
+                    relation.headerPageId = headerPageId
+
+                    return relation
+
+            # Si aucune relation n'est trouvée
+            raise ValueError(f"Relation '{name}' non trouvée")
+
+        except json.JSONDecodeError:
+            raise ValueError("fichier JSON non conforme")
+
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
-
+'''
 if __name__ == "__main__":
     
     bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-    liste = [Column.ColumnInfo("test1", Column.Char(3)), Column.ColumnInfo("test2", Column.Int())]
+    liste = [Column.ColumnInfo("test1", Column.VarChar(5)), Column.ColumnInfo("test2", Column.Int())]
     bufferManager.disk.LoadState()
-    relation = Relation("test", 2, liste, bufferManager.disk, bufferManager) 
-
-    record1 = Record(["azt", 2])
+    script_dir = Path(__file__).parent
+    db_file_path = script_dir / "../../storage/database/test1.json"
+    record1 = Record(["azt", 4])
+    relation = Relation("test6", 2, liste, bufferManager.disk, bufferManager) 
     record2 = Record([])
-    
-    '''buff = bufferManager.getPage(PageId(0, 0))
+    #relation = Relation.loadRelation("test1", bufferManager.disk, bufferManager, db_file_path)
+    print(f"Relation loaded: {relation.name}, Columns: {relation.nb_column}, HeaderPageId: {relation.headerPageId}")
+
+    buff = bufferManager.getPage(PageId(0, 0))
 
     op1 = relation.writeRecordToBuffer(record1, buff, 0)
 
@@ -383,8 +494,14 @@ if __name__ == "__main__":
         print(x)
 
     print(op2)
-    '''    
-    relation.readFromBuffer(record2, bufferManager.getPage(PageId(0, 1)), 0)
-    print(record2.values)
+        
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.addDataPage()
+    relation.saveRelation(db_file_path)
+    bufferManager.disk.SaveState()'''
     
-    bufferManager.disk.SaveState()
+    

@@ -11,10 +11,10 @@ config_file = os.path.join(current_dir, "..", "config", "DBconfig.json")
 
 savefile = os.path.join(current_dir, "..", "config", "dm.save.json")
 
-config = DBconfig.LoadDBConfig(config_file)  # Pass the path as a string
+config = DBconfig.LoadDBConfig(config_file) 
 
 
-dbpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", config.dbpath))
+dbpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", config.dbpath, "datafiles"))
 os.makedirs(dbpath, exist_ok=True)
 
 class DiskManager:
@@ -91,8 +91,6 @@ class DiskManager:
         filename = os.path.join(dbpath, f"F{pageId.fileIdx}.rsdb")
         
         pagebyte = self.config.pagesize * pageId.pageIdx
-        print(f"PageId: {pageId}")
-        print(f"Pagebyte: {pagebyte}")
         with open(filename, "r+b") as f:
             # Pointer au début de la page
             f.seek(pagebyte, 0)
@@ -104,7 +102,6 @@ class DiskManager:
             f.write(data)
             f.flush()
             os.fsync(f.fileno())
-            print(f"Data à écrire ({len(data)} octets) : {data}")
 
     def DeAllocPage(self, pageId:PageId) -> None:
         """
@@ -158,8 +155,7 @@ class DiskManager:
 if __name__ == "__main__":
     config = DBconfig.LoadDBConfig(config_file)
     disk = DiskManager(config)
-    buff = Buffer()
-    
+    buff = Buffer()    
     disk.SaveState()
     
     

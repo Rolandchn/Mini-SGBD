@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-
+from dataclasses import dataclass, asdict
 
 @dataclass
 class Base:
@@ -7,35 +6,41 @@ class Base:
         for value, value_type in self.__annotations__.items():
             assert isinstance(getattr(self, value), value_type)
 
-
-
 @dataclass
 class Int:
     size: int = 4
+
+    def to_dict(self):
+        return {"type": "Int", "size": self.size}
 
 @dataclass
 class Float:
     size: int = 4
 
+    def to_dict(self):
+        return {"type": "Float", "size": self.size}
+
 @dataclass
 class Char:
     size: int
 
+    def to_dict(self):
+        return {"type": "Char", "size": self.size}
 
 @dataclass
 class VarChar:
     size: int
+
+    def to_dict(self):
+        return {"type": "VarChar", "size": self.size}
 
 @dataclass
 class ColumnInfo(Base):
     name: str
     type: Int | Float | Char | VarChar
 
-
-if __name__ == "__main__":
-    c = Char(40)
-    vc = VarChar(40)
-    i = Int()
-    f = Float()
-
-    print(i)
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "type": self.type.to_dict()
+        }
