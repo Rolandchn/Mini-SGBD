@@ -32,7 +32,9 @@ class Database:
         return list(self.tables.keys())
     
     def saveRelation(self, relation: 'Relation'):
-        db_file_path = os.path.join(Path(__file__).parent,"..","..","storage","database",f"{self.name}.json")
+        """
+        Retourne les données de la relation sous forme de dictionnaire.
+        """
         relation_data = {
             "name": relation.name,
             "nb_columns": relation.nb_column,
@@ -42,40 +44,17 @@ class Database:
                 "pageIdx": relation.headerPageId.pageIdx
             }
         }
+        return relation_data
 
-        if os.path.isfile(db_file_path):
-            try:
-                with open(db_file_path, "r", encoding="utf-8") as db_file:
-                    data = json.load(db_file)
-            except json.JSONDecodeError:
-                data = []
-        else:
-            data = []
-
-        updated = False
-        for existing_relation in data:
-            if existing_relation["name"] == relation.name:
-                existing_relation.update(relation_data)
-                updated = True
-                break
-
-        if not updated:
-            data.append(relation_data)
-
-        with open(db_file_path, "w", encoding="utf-8") as db_file:
-            json.dump(data, db_file, indent=4, ensure_ascii=False)
     def markAsSaved(self):
         self._unsaved_changes = False
+
     def hasUnsavedChanges(self) -> bool:
         return self._unsaved_changes
-    #Chargement de la base de données
-    def loadDatabase(self):
-        pass
-    
-    #Sauvegarde de la base de données
-    def saveDatabase(self):
-        pass
-    
-    
-    
 
+    def markAsLoaded(self):
+        """
+        Marque la base de données comme étant chargée.
+        """
+        self.loaded = True
+        print(f"Database {self.name} marked as loaded.")

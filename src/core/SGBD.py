@@ -137,4 +137,4 @@ class SGBD:
     
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
-    
+    sgbd.run()
