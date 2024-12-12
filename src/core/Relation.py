@@ -1,16 +1,15 @@
-import os
 from typing import List
 import Column
-from pathlib import Path
 from PageId import PageId
 from Buffer import Buffer
 from Record import Record
 from DiskManager import DiskManager
 from BufferManager import BufferManager
-import traceback 
-import json
+
+
 #TODO rajouter des Flag dirty pour les pages modifiées
 #TODO liberer tout les buffers
+
 class Relation:
     def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo],
                 disk: DiskManager, bufferManager: BufferManager):
