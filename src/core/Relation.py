@@ -223,7 +223,6 @@ class Relation:
         n = buffer.read_int()
         buffer.set_position(0)
         buffer.put_int(n + 1)
-        print("n : ",n)
         buffer.set_position(12 * n + 4)
         buffer.put_int(dataPageId.fileIdx)
         buffer.put_int(dataPageId.pageIdx)
@@ -235,7 +234,6 @@ class Relation:
         self.bufferManager.FlushBuffers()        
         #Init data page
         buffer2 = self.bufferManager.getPage(dataPageId)
-        print("page buffer 2 :",buffer2.pageId)
         buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
         for _ in range(self.disk.config.nb_slots):
             buffer2.put_int(-1)
@@ -286,7 +284,6 @@ class Relation:
         # write record
         buffer2.set_position(self.disk.config.pagesize - 4)
         position_debut = buffer2.read_int()
-        print("position début :", position_debut)
         tailleRecord = self.writeRecordToBuffer(record, buffer2, position_debut)
 
         # maj rouge

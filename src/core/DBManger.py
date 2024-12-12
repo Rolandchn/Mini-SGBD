@@ -236,31 +236,3 @@ class DBManager:
             del self.databases[db_name]
             
 #tous les méthode remove doit etre revu !!!!
-if __name__ == "__main__":
-    liste = [Column.ColumnInfo("test1", Column.VarChar(5)), Column.ColumnInfo("test2", Column.Int())]
-    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-    bufferManager.disk.LoadState()
-    db_manager = DBManager(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
-    db_manager.loadState()
-    print(db_manager.listDatabases())
-    db_manager.setCurrentDatabase("db2")
-    db_manager.removeDatabase("db2")
-    print(db_manager.listTablesInCurrentDatabase())
-    db_manager.saveState()
-    '''db_manager.createDatabase("db1")
-    db_manager.createDatabase("db2")
-    db_manager.createDatabase("db5")
-    db_manager.setCurrentDatabase("db1")
-    db_manager.createDatabase("db3")
-    db_manager.removeDatabase("db1")
-    db_manager.removeDatabase("db3")'''
-    '''print(db_manager.listDatabases())
-    db_manager.setCurrentDatabase("db2")
-    print(db_manager.listDatabases())
-    script_dir = Path(__file__).parent
-    db_file_path = script_dir / "../../storage/database/test1.json"
-    db_manager.addTableToCurrentDatabase(Relation.loadRelation("test6",bufferManager.disk, bufferManager,"db2"))
-    db_manager.addTableToCurrentDatabase(Relation.loadRelation("test4",bufferManager.disk, bufferManager,"db2"))
-    print(db_manager.listTablesInCurrentDatabase())
-    db_manager.listTablesInCurrentDatabase()
-    print(db_manager.listTablesInCurrentDatabase())'''

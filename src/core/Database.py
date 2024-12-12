@@ -57,4 +57,4 @@ class Database:
         Marque la base de données comme étant chargée.
         """
         self.loaded = True
-        print(f"Database {self.name} marked as loaded.")
+        print(f"Database {self.name} loaded.")

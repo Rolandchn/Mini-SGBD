@@ -44,19 +44,3 @@ class ColumnInfo(Base):
             "name": self.name,
             "type": self.type.to_dict()
         }
-
-if __name__ == "__main__":
-    c = Char(40)
-    vc = VarChar(40)
-    i = Int()
-    f = Float()
-    #test to_dict
-    '''column1 = ColumnInfo(name="Column1", type=c)
-    column2 = ColumnInfo(name="Column2", type=vc)
-    column3 = ColumnInfo(name="Column3", type=i)
-    column4 = ColumnInfo(name="Column4", type=f)
-
-    print(column1.to_dict())
-    print(column2.to_dict())
-    print(column3.to_dict())
-    print(column4.to_dict())'''

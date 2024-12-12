@@ -7,7 +7,3 @@ class RecordId:
     pageId: PageId
     slotIdx: int
 
-
-if __name__ == "__main__":
-    r = RecordId(PageId(1, 1), 2)
-    print(r)

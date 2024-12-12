@@ -16,10 +16,4 @@ class DBconfig:
 
         return DBconfig(data)
 
-if __name__ == "__main__":
-    current_dir = os.path.dirname(__file__)
-    
-    config_file = os.path.join(current_dir, "..", "config", "DBconfig.json")
-    
-    conf = DBconfig.LoadDBConfig(config_file)
-    print(conf.__dict__)
+
