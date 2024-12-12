@@ -6,6 +6,8 @@ from DBconfig import DBconfig
 from Column import ColumnInfo
 import Column
 from Relation import Relation
+import os
+from pathlib import Path
 
 
 class SGBD:
@@ -13,7 +15,7 @@ class SGBD:
         self.db_config = db_config
         self.disk_manager = DiskManager(db_config)
         self.buffer_manager = BufferManager(db_config, self.disk_manager)
-        self.db_manager = DBManager(db_config, self.buffer_manager)
+        self.db_manager = DBManager(db_config)
 
         # Charger l'état des composants
         self.disk_manager.LoadState()
@@ -75,7 +77,7 @@ class SGBD:
         self.db_manager.setCurrentDatabase(db_name)
         print(f"Database set to {db_name}.")
 
-    def processCreateTableCommand(self, parts: List[str]):
+    def processCreateTableCommand(self, parts: list[str]):
         if len(parts) < 4:
             print("Invalid CREATE TABLE command.")
             return
@@ -131,3 +133,8 @@ class SGBD:
                 size = int(type_str[8:-1])
                 columns.append(ColumnInfo(name, Column.VarChar(size)))
         return columns
+    
+    
+if __name__ == "__main__":
+    sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
+    sgbd.run()

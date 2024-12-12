@@ -14,9 +14,3 @@ class Buffer(ByteBuffer):
     def __init__(self, size=30):
         super().__init__(size)
 
-
-
-if __name__ == "__main__":
-    b = Buffer()
-    b.pageId = PageId(1, 1)
-    print(b)
