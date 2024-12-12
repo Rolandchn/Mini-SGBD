@@ -32,8 +32,8 @@ if __name__ == "__main__":
                         buffManager)
     
     r1_1 = Record(["Leo", 21, 123456])
-    r1_r2 = Record(["Hector", 22, 121212])
-    r1_r3 = Record(["Marc", 24, 654321])
+    r1_2 = Record(["Hector", 22, 121212])
+    r1_3 = Record(["Marc", 24, 654321])
 
     # Relation 2: nom | prix
     relation2 = Relation("fruit", 
@@ -58,19 +58,13 @@ if __name__ == "__main__":
     
     op2 = relation1.readFromBuffer(record, buff, 0)
 
-
-    # Affichage
-    for x in record.values:
-        print(x)
-
-
     ## Record & DataPage
-    print(buffManager.buffers)
-
     datapage_id1 = relation1.addDataPage()
-
 
     # Ecriture
     relation1.writeRecordToDataPage(r1_1, datapage_id1)
-
-
+    relation1.writeRecordToDataPage(r1_2, datapage_id1)
+    relation1.writeRecordToDataPage(r1_3, datapage_id1)
+    
+    for x in relation1.getRecordsInDataPage(datapage_id1):
+        print(x.values)
