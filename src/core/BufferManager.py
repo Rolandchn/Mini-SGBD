@@ -40,16 +40,16 @@ class BufferManager:
 
         # cas où il y a une page identique
         for buffer in self.buffers:
+            if pageId == buffer.pageId:
+                buffer.pin_count += 1
+                return buffer
+            
             if buffer.pin_count != 0:
                 continue
 
             else:
                 has_pin_count0 = True
             
-            if pageId == buffer.pageId:
-                buffer.pin_count += 1
-                return buffer
-
             # stock la 1er page libre
             if buffer.pageId is None and free_buffer is None:
                 free_buffer = buffer

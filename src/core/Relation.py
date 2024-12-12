@@ -212,7 +212,7 @@ class Relation:
         return False
 
 
-    def addDataPage(self) -> None:
+    def addDataPage(self) -> PageId:
         """ 
         
         """
@@ -245,6 +245,8 @@ class Relation:
         
         buffer2.dirty_flag = True
         self.bufferManager.FlushBuffers()
+
+        return dataPageId
 
     def getFreeDataPageId(self, sizeRecord):
         """ 
