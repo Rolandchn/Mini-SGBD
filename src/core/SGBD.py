@@ -78,9 +78,9 @@ class SGBD:
         print(f"Database set to {db_name}.")
 
     def processCreateTableCommand(self, parts: list[str]):
-        if len(parts) < 4:
+        '''if len(parts) < 4:
             print("Invalid CREATE TABLE command.")
-            return
+            return'''
 
         table_name = parts[0]
         columns = self.parseColumns(parts[1])
@@ -138,3 +138,10 @@ class SGBD:
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
     sgbd.run()
+    
+
+#TODO ne devrait pas afficher un log de succès tant que ça a pas marché
+#TODO desalouer les pages des bases et tables supprimées
+#TODO revoir la condition de create table
+
+#REMARQUE : on peut pas mettre d'accents dans les records
