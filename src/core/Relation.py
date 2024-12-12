@@ -370,6 +370,17 @@ class Relation:
             liste2.append(liste3)
 
         return liste2
+    
+    def desallocAllPagesOfRelation(self):
+        headerPage = self.bufferManager.getPage(self.headerPageId)
+        headerPage.set_position(0)
+        nb = headerPage.read_int()
+        for _ in range(nb):
+            fidx = headerPage.read_int()
+            pidx = headerPage.read_int()
+            self.disk.FreePage(PageId(fidx, pidx))
+            headerPage.set_position(headerPage.getPos() + 4)
+        
 
     '''def saveRelation(self, db_file_path):
         relation_data = {
@@ -466,7 +477,7 @@ class Relation:
 
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
-'''
+
 if __name__ == "__main__":
     
     bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
