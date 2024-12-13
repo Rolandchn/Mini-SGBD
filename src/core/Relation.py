@@ -1,16 +1,15 @@
-import os
 from typing import List
 import Column
-from pathlib import Path
 from PageId import PageId
 from Buffer import Buffer
 from Record import Record
 from DiskManager import DiskManager
 from BufferManager import BufferManager
-import traceback 
-import json
+
+
 #TODO rajouter des Flag dirty pour les pages modifiées
 #TODO liberer tout les buffers
+
 class Relation:
     def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo],
                 disk: DiskManager, bufferManager: BufferManager):
@@ -20,29 +19,9 @@ class Relation:
 
         self.disk = disk
         self.bufferManager = bufferManager
-        #A voir si on garde ou pas
-        '''db_file_path = Path(__file__).parent / "../../storage/database" / f"{name}.json"
-        self.db_file_path = db_file_path'''
 
         self.headerPageId = None
 
-        # Charger les données du fichier JSON (a voir si on garde ou pas)
-        '''if db_file_path.is_file():
-            try:
-                with open(db_file_path, "r", encoding="utf-8") as db_file:
-                    data = json.load(db_file)
-                #cas où la relation existe déjà
-                for relation_data in data:
-                    #recherche par nom
-                    if relation_data["name"] == self.name:
-                        self.headerPageId = PageId(
-                            fileIdx=relation_data["headerPageId"]["fileIdx"],
-                            pageIdx=relation_data["headerPageId"]["pageIdx"]
-                        )
-                        break
-            except json.JSONDecodeError as e:
-                print("Erreur : ", e)
-        '''
         #Cas ou relation existe pas, allouer une nouvelle page
         if self.headerPageId is None:
             self.headerPageId = self.disk.AllocPage()
@@ -212,7 +191,7 @@ class Relation:
         return False
 
 
-    def addDataPage(self) -> None:
+    def addDataPage(self) -> PageId:
         """ 
         
         """
@@ -246,6 +225,8 @@ class Relation:
         buffer2.dirty_flag = True
         self.bufferManager.FlushBuffers()
 
+        return dataPageId
+
     def getFreeDataPageId(self, sizeRecord):
         """ 
          
@@ -266,7 +247,27 @@ class Relation:
         
         return None
 
-    def writeRecordToDataPage(self, record: Record, pageId:PageId):
+
+    def writeRecordToDataPage(self, record: Record, pageId:PageId) -> None:
+        """
+        Opération: Ecrit le record sur un buffer et met à jour les informations du data page et du header page
+        """
+        buffer = self.bufferManager.getPage(pageId)
+        
+        # write record
+        # On récupère "position début record disponible" car on ne connait pas quand commence le datapage si il est rempli (si le datapage est vide alors, position est juste 0)
+        buffer.set_position(self.disk.config.pagesize - 4) 
+        # position début Rec M: pagesize - 4 - 4 - 8 * nb_slots
+        positionRecord = buffer.read_int()
+        tailleRecord = self.writeRecordToBuffer(record, buffer, positionRecord)
+        
+        self.updateDataPage(buffer, positionRecord, tailleRecord)
+        self.updateHeaderPage(pageId, tailleRecord)
+
+        self.bufferManager.FlushBuffers()
+
+
+    def updateHeaderPage(self, pageId: PageId, tailleRecord: int):
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
         N = buffer.read_int()
@@ -279,60 +280,62 @@ class Relation:
 
             if pageId == PageId(fidx, pidx):
                 break
-        
-        buffer2 = self.bufferManager.getPage(pageId)
-        # write record
-        buffer2.set_position(self.disk.config.pagesize - 4)
-        position_debut = buffer2.read_int()
-        tailleRecord = self.writeRecordToBuffer(record, buffer2, position_debut)
-
-        # maj rouge
-        buffer2.set_position(self.disk.config.pagesize - 4)
-        buffer2.put_int(position_debut + tailleRecord)
-
-        buffer2.set_position(self.disk.config.pagesize - 16)
-        
-        # maj vert 1
-        while buffer2.read_int() != -1:
-            buffer2.set_position(buffer.getPos() - 12)
-        
-        # maj vert 2 
-        buffer2.put_int(position_debut)
-        buffer2.put_int(tailleRecord)
 
         # décrémenter nb octet libre
         buffer.set_position(buffer.getPos() - 4)
         t2 = buffer.read_int()
         buffer.set_position(buffer.getPos() - 4)
         buffer.put_int(t2 - tailleRecord)
-
         
         buffer.dirty_flag = True
-        buffer2.dirty_flag = True
+        
 
-        self.bufferManager.FlushBuffers()
+    def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int):
+        # maj rouge
+        buffer.set_position(self.disk.config.pagesize - 4)
+        buffer.put_int(positionRecord + tailleRecord)
+
+        # maj vert 1
+        buffer.set_position(self.disk.config.pagesize - 16)
+
+        while buffer.read_int() != -1:
+            buffer.set_position(buffer.getPos() - 12)
+        
+        else:
+            buffer.set_position(buffer.getPos() - 4)
+        
+        # maj vert 2 
+        buffer.put_int(positionRecord)
+        buffer.put_int(tailleRecord)
+
+        buffer.dirty_flag = True
 
 
-        # position début Rec M: pagesize - 4 - 4 - 8 * nb_slots
-        # position début espace disponible = somme de toutes les tailles
-
-
-    def getRecordsInDataPage(self, pageId: PageId):
+    def getRecordsInDataPage(self, pageId: PageId) -> List[Record]:
+        """
+        Opération: Lis chaque record d'un datapage
+        Sortie: Retourne la liste des records d'une datapage
+        """
         buffer = self.bufferManager.getPage(pageId)
 
+        # positionner sur le début de la première ligne verte
         buffer.set_position(self.disk.config.pagesize - 16)
 
         liste = []
+        record = Record()
 
-        while buffer.read_int() != -1:
-            buffer.set_position(buffer.getPos() - 4)
-            record = Record([])
-            self.readFromBuffer(record, buffer, buffer.read_int()) 
+        while(positionRecord := buffer.read_int()) != -1:
+            indexRecord = buffer.getPos() - 4
+            
+            self.readFromBuffer(record, buffer, positionRecord) 
+            
             liste.append(record)       
-            buffer.set_position(buffer.getPos() - 12)
+            
+            buffer.set_position(indexRecord - 8)
 
         return liste
     
+
     def getDataPages(self):
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
