@@ -384,38 +384,7 @@ class Relation:
             self.disk.DeAllocPage(PageId(fidx, pidx))
             headerPage.set_position(headerPage.getPos() + 4)
         self.disk.DeAllocPage(self.headerPageId)
-
-    '''def saveRelation(self, db_file_path):
-        relation_data = {
-            "name": self.name,
-            "nb_columns": self.nb_column,
-            "columns": [column.to_dict() for column in self.columns],  
-            "headerPageId": {"fileIdx": self.headerPageId.fileIdx, "pageIdx": self.headerPageId.pageIdx}
-        }
         
-        if db_file_path.is_file():
-            try:
-                with open(db_file_path, "r", encoding="utf-8") as db_file:
-                    data = json.load(db_file)
-            except json.JSONDecodeError:
-                data = []  
-        else:
-            data = []
-        
-        
-        updated = False
-        for relation in data:
-            if relation["name"] == self.name:
-                relation.update(relation_data)
-                updated = True
-                break
-        
-        if not updated:
-            data.append(relation_data)
-        
-        with open(db_file_path, "w", encoding="utf-8") as db_file:
-            json.dump(data, db_file, indent=4, ensure_ascii=False)
-            '''
     @classmethod
     def loadRelation(cls, name: str, diskManager, bufferManager, nomBD):
         from pathlib import Path
