@@ -59,20 +59,11 @@ class Condition:
         else:
             raise ValueError(f"Unknown value type: {type(value)}")
 
-column_infos = {
-    'id': ColumnInfo(name='id', type=Int()),
-    'name': ColumnInfo(name='name', type=VarChar(50)),
-    'salary': ColumnInfo(name='salary', type=Float())
-}
-
-if __name__=='__main__':
-    record = Record(values=['5', 'Alice', '50000.0'])
-
-    condition = Condition('id', '=', '5')
-    print(condition.evaluate(record, column_infos))
-
-    condition = Condition('name', '=', 'Alice')
-    print(condition.evaluate(record, column_infos))
-
-    condition = Condition('salary', '=', '50000')
-    print(condition.evaluate(record, column_infos))
+    @staticmethod
+    def from_string(condition_str: str) -> 'Condition':
+        """
+        Crée une instance de Condition à partir d'une chaîne de caractères.
+        """
+        condition_str = condition_str.strip()
+        term1, op, term2 = condition_str.split()
+        return Condition(term1, op, term2)

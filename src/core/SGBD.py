@@ -185,6 +185,40 @@ class SGBD:
                 print(f"Record inserted into table {reste[1]}.")
             else:
                 print("Invalid INSERT command.")
+
+
+
+    def processSelectCommand(self, command: str):
+        parts = command.split()
+        if len(parts) < 4 or parts[1].upper() != "FROM":
+            print("Invalid SELECT command.")
+            return
+
+        columns = parts[1].split(",")
+        table_name = parts[3]
+        conditions = self.parseConditions(command)
+
+        if self.db_manager.current_database:
+            table = self.db_manager.current_database.tables.get(table_name)
+            if table:
+                self.selectRecords(table, columns, conditions)
+            else:
+                print(f"Table {table_name} does not exist.")
+        else:
+            print("No current database set.")
+
+    def selectRecords(self, table: Relation, columns: list[str], conditions: list):
+        all_records = table.GetAllRecords()
+        filtered_records = []
+
+        for record in all_records:
+            if all(condition.evaluate(record, table.columns) for condition in conditions):
+                filtered_records.append(record)
+
+        for record in filtered_records:
+            print("; ".join(record.values) + ".")
+        print(f"Total records={len(filtered_records)}")
+        
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
     sgbd.run()

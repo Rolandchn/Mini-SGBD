@@ -332,6 +332,7 @@ class Relation:
             
             buffer.set_position(indexRecord - 8)
 
+        relation.bufferManager.FlushBuffers()
         return liste
     
 
@@ -369,7 +370,8 @@ class Relation:
         liste2 = []
         for dataPageId in liste:
             liste3 = self.getRecordsInDataPage(dataPageId)
-            liste2.append(liste3)
+            if liste3 != []:
+                liste2.extend(liste3)
 
         return liste2
     
@@ -456,12 +458,10 @@ if __name__ == "__main__":
     bufferManager.disk.LoadState()
     script_dir = Path(__file__).parent
     db_file_path = script_dir / "../../storage/database/test1.json"
-    record1 = Record(["azt", 4])
+    record1 = Record([1, 4])
     #relation = Relation("test6", 2, liste, bufferManager.disk, bufferManager) 
     record2 = Record([])
     relation = Relation.loadRelation("test6", bufferManager.disk, bufferManager, "A")
-    relation.addDataPage()
-    relation.addDataPage()
     '''print(f"Relation loaded: {relation.name}, Columns: {relation.nb_column}, HeaderPageId: {relation.headerPageId}")
 
     buff = bufferManager.getPage(PageId(0, 0))
@@ -479,15 +479,12 @@ if __name__ == "__main__":
 
     print(op2)
         
-    relation.addDataPage()
-    relation.addDataPage()
-    relation.addDataPage()
-    relation.addDataPage()
-    relation.addDataPage()
     relation.addDataPage()'''
-    dp = relation.getFreeDataPageId(0)
-    print(relation.headerPageId)
-    print(dp)
+    relation.desallocAllPagesOfRelation()
+
+    print("a")
+    relation.GetAllRecords()
+    print("b")
     bufferManager.disk.SaveState()
     
     
