@@ -1,0 +1,78 @@
+from typing import Any, Union
+from Column import ColumnInfo, Int, Float, Char, VarChar
+from Record import Record
+
+class Condition:
+    def __init__(self, left: Union[int, str], operator: str, right: Union[int, str]):
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+    def evaluate(self, record: Record, column_infos: dict[str, ColumnInfo]) -> bool:
+        """
+        Évalue la condition en fonction des valeurs du record et des types de colonnes.
+        """
+        left_value = self._get_value(self.left, record, column_infos)
+        right_value = self._get_value(self.right, record, column_infos)
+
+        if self.operator == '=':
+            return left_value == right_value
+        elif self.operator == '!=':
+            return left_value != right_value
+        elif self.operator == '<':
+            return left_value < right_value
+        elif self.operator == '>':
+            return left_value > right_value
+        elif self.operator == '<=':
+            return left_value <= right_value
+        elif self.operator == '>=':
+            return left_value >= right_value
+        else:
+            raise ValueError(f"Unknown operator: {self.operator}")
+
+    def _get_value(self, value: Union[int, str], record: Record, column_infos: dict[str, ColumnInfo]) -> Any:
+        """
+        Obtient la valeur réelle en fonction du type de colonne.
+        """
+        if isinstance(value, int):
+            return value
+        elif isinstance(value, str):
+            if value.isdigit():
+                return int(value)
+            elif value.replace('.', '', 1).isdigit():
+                return float(value)
+            else:
+                column_info = column_infos.get(value)
+                if column_info:
+                    column_type = column_info.type
+                    index = list(column_infos.keys()).index(value)
+                    if isinstance(column_type, Int):
+                        return int(record.values[index])
+                    elif isinstance(column_type, Float):
+                        return float(record.values[index])
+                    elif isinstance(column_type, Char) or isinstance(column_type, VarChar):
+                        return record.values[index]
+                    else:
+                        raise ValueError(f"Unknown column type: {column_type}")
+                else:
+                    return value
+        else:
+            raise ValueError(f"Unknown value type: {type(value)}")
+
+column_infos = {
+    'id': ColumnInfo(name='id', type=Int()),
+    'name': ColumnInfo(name='name', type=VarChar(50)),
+    'salary': ColumnInfo(name='salary', type=Float())
+}
+
+if __name__=='__main__':
+    record = Record(values=['5', 'Alice', '50000.0'])
+
+    condition = Condition('id', '=', '5')
+    print(condition.evaluate(record, column_infos))
+
+    condition = Condition('name', '=', 'Alice')
+    print(condition.evaluate(record, column_infos))
+
+    condition = Condition('salary', '=', '50000')
+    print(condition.evaluate(record, column_infos))
