@@ -353,7 +353,8 @@ class Relation:
         return liste
     
     def InsertRecord(self, record: Record):
-        size = #taille du record
+        size = self.writeRecordToBuffer(record,self.bufferManager.getPage(self.headerPageId),0)
+        self.bufferManager.FreePage(self.headerPageId)
         freepage = self.getFreeDataPageId(size)
         if freepage is not None:
             self.writeRecordToDataPage(record, freepage)
@@ -474,9 +475,7 @@ if __name__ == "__main__":
         print(x)
 
     print(op2)
-        
-    relation.addDataPage()'''
-    relation.desallocAllPagesOfRelation()
+    '''
 
     print("a")
     relation.GetAllRecords()

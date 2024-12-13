@@ -8,7 +8,7 @@ import Column
 from Relation import Relation
 import os
 from pathlib import Path
-
+from Record import Record
 
 class SGBD:
     def __init__(self, db_config:DBconfig):
@@ -60,7 +60,7 @@ class SGBD:
             elif parts[1].upper() == "TABLES":
                 self.processListTablesCommand()
         elif cmd == "INSERT":        
-            self.processInsertCommand(parts[1:])
+            self.processInsertCommand(command)
         elif cmd == "BULKINSERT":
             self.processBulkInsertCommand(parts[1:])
         elif cmd == "SELECT":
@@ -141,53 +141,43 @@ class SGBD:
         return columns
     
     
-    @staticmethod
-    def parseValues(columns_str: str) -> list[ColumnInfo]:
-        columns = []
-        column_parts = columns_str[1:-1].split(",")
-        for column_part in column_parts:
-                columns.append(column_part)
-                
-        return columns
-    
-    
-    #TP 7 START GO GO GO 
-    def processInsertCommand(self,reste: list[str]):
-        # Récupérer la table de la base de données courante
-            if reste[0].upper() == "INTO" and reste[2].upper() == "VALUES":
-                table = self.db_manager.getTableFromCurrentDatabase(reste[1])
-                if table is None:
-                    print(f"Table {reste[1]} does not exist.")
-                    return
-                # Vérifier que le nombre de valeurs correspond au nombre de colonnes
-                values = self.parseValues(reste[3])
-                if len(values) != table.nb_column:
-                    print(f"Number of values does not match the number of columns in table {reste[1]}.")
-                    return
-                # Convertir les valeurs en types appropriés
-                typed_values = []
-                for i, value in enumerate(values):
-                    column_type = table.columns[i].type
-                    if column_type == Column.Int():
-                        typed_values.append(int(value))
-                    elif column_type == Column.Float():
-                        typed_values.append(float(value))
-                    elif column_type == Column.Char(column_type.size) and len(value) == column_type.size:
-                        typed_values.append(value)
-                    elif column_type == Column.VarChar(column_type.size) and len(value) <= column_type.size:
-                        typed_values.append(value)
-                    else:
-                        print("Invalid column type.")
-                        return
-                print(typed_values)
-                # Insérer le tuple dans la table
-                table.InsertRecord(typed_values)
-                print(f"Record inserted into table {reste[1]}.")
+    def parseValues(self, values_str: str) -> list:
+        values = []
+        value_parts = values_str.split(",")
+        for value_part in value_parts:
+            value_part = value_part.strip()
+            if value_part.startswith('"') and value_part.endswith('"'):
+                values.append(value_part[1:-1])
+            elif value_part.isdigit():
+                values.append(int(value_part))
+            elif value_part.replace('.', '', 1).isdigit():
+                values.append(float(value_part))
             else:
-                print("Invalid INSERT command.")
+                values.append(value_part)
+        return values
 
+    
+    #TP 7 START GO GO GO
+    def processInsertCommand(self, command: str):
+        parts = command.split()
+        if len(parts) < 5 or parts[1].upper() != "INTO" or parts[3].upper() != "VALUES":
+            print("Invalid INSERT command.")
+            return
 
+        table_name = parts[2]
+        values_str = parts[4][1:-1]
+        typed_values = self.parseValues(values_str)
 
+        if self.db_manager.current_database:
+            table = self.db_manager.getTableFromCurrentDatabase(table_name)
+            if table:
+                record = Record(typed_values)
+                rid = table.InsertRecord(record)
+                print(f"Record inserted with RID: {rid}")
+            else:
+                print(f"Table {table_name} does not exist.")
+        else:
+            print("No current database set.")
     def processSelectCommand(self, command: str):
         parts = command.split()
         if len(parts) < 4 or parts[1].upper() != "FROM":
