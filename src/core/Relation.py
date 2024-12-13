@@ -5,7 +5,8 @@ from Buffer import Buffer
 from Record import Record
 from DiskManager import DiskManager
 from BufferManager import BufferManager
-
+import os
+from pathlib import Path
 
 #TODO rajouter des Flag dirty pour les pages modifiées
 #TODO liberer tout les buffers
@@ -236,13 +237,11 @@ class Relation:
         n = buffer.read_int()
 
         for i in range(n):
-            buffer.set_position((i + 1) * 12)
-            position = buffer.read_int()
+            fidx = buffer.read_int()
+            pidx = buffer.read_int()
+            espaceLibre = buffer.read_int()
             
-            if position <= sizeRecord:
-                pos = position - 8
-                buffer.set_position(pos)
-
+            if espaceLibre >= sizeRecord:
                 return PageId(buffer.read_int(), buffer.read_int())
         
         return None
@@ -461,7 +460,9 @@ if __name__ == "__main__":
     #relation = Relation("test6", 2, liste, bufferManager.disk, bufferManager) 
     record2 = Record([])
     relation = Relation.loadRelation("test6", bufferManager.disk, bufferManager, "A")
-    print(f"Relation loaded: {relation.name}, Columns: {relation.nb_column}, HeaderPageId: {relation.headerPageId}")
+    relation.addDataPage()
+    relation.addDataPage()
+    '''print(f"Relation loaded: {relation.name}, Columns: {relation.nb_column}, HeaderPageId: {relation.headerPageId}")
 
     buff = bufferManager.getPage(PageId(0, 0))
 
@@ -483,7 +484,10 @@ if __name__ == "__main__":
     relation.addDataPage()
     relation.addDataPage()
     relation.addDataPage()
-    relation.addDataPage()
+    relation.addDataPage()'''
+    dp = relation.getFreeDataPageId(0)
+    print(relation.headerPageId)
+    print(dp)
     bufferManager.disk.SaveState()
     
     
