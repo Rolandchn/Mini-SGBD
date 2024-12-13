@@ -352,18 +352,14 @@ class Relation:
             
         return liste
     
-    def InsertRecord(self, record):
-        buffer = self.bufferManager.getPage(self.headerPageId)
-        buffer.set_position(0)
-        N = buffer.read_int()
-
-        liste = []
-
-        for _ in range(N):
-            fidx = buffer.read_int()
-            pidx = buffer.read_int()
-
-        ...
+    def InsertRecord(self, record: Record):
+        size = #taille du record
+        freepage = self.getFreeDataPageId(size)
+        if freepage is not None:
+            self.writeRecordToDataPage(record, freepage)
+        else:
+            freepage = self.addDataPage()
+            self.writeRecordToDataPage(record, freepage)
 
     def GetAllRecords(self):
         liste = self.getDataPages()
