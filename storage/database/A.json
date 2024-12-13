@@ -1,0 +1,50 @@
+[
+    {
+        "name": "test6",
+        "nb_columns": 2,
+        "columns": [
+            {
+                "name": "C",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            },
+            {
+                "name": "D",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            }
+        ],
+        "headerPageId": {
+            "fileIdx": 1,
+            "pageIdx": 1
+        }
+    },
+    {
+        "name": "Table1",
+        "nb_columns": 2,
+        "columns": [
+            {
+                "name": "A",
+                "type": {
+                    "type": "VarChar",
+                    "size": 3
+                }
+            },
+            {
+                "name": "B",
+                "type": {
+                    "type": "Char",
+                    "size": 2
+                }
+            }
+        ],
+        "headerPageId": {
+            "fileIdx": 1,
+            "pageIdx": 2
+        }
+    }
+]
