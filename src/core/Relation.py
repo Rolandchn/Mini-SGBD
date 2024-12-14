@@ -31,10 +31,10 @@ class Relation:
         buffer.set_position(0)
         buffer.put_int(0)
         #remplacer write page par un dirty = true
-        bufferManager.disk.WritePage(self.headerPageId, buffer)
+        self.bufferManager.disk.WritePage(self.headerPageId, buffer)
         buffer.set_position(0)
         buffer.dirty_flag = False
-        bufferManager.FreePage(self.headerPageId)
+        self.bufferManager.FreePage(self.headerPageId)
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
@@ -208,7 +208,7 @@ class Relation:
         pageSize = self.disk.config.pagesize
         buffer.put_int(pageSize - 8 * (m + 1))
         buffer.dirty_flag = True
-        bufferManager.FreePage(self.headerPageId)
+        self.bufferManager.FreePage(self.headerPageId)
         #TODO free page au lieu de flushbuffers
         self.bufferManager.FlushBuffers()        
         #Init data page
@@ -223,7 +223,7 @@ class Relation:
         buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
         
         buffer2.dirty_flag = True
-        bufferManager.FreePage(dataPageId)
+        self.bufferManager.FreePage(dataPageId)
         return dataPageId
 
     def getFreeDataPageId(self, sizeRecord):
@@ -241,7 +241,7 @@ class Relation:
             
             if espaceLibre >= sizeRecord:
                 return PageId(fidx, pidx)
-        bufferManager.FreePage(self.headerPageId)
+        self.bufferManager.FreePage(self.headerPageId)
         return None
 
 
@@ -261,7 +261,7 @@ class Relation:
         slot = self.updateDataPage(buffer, positionRecord, tailleRecord)
         self.updateHeaderPage(pageId, tailleRecord)
 
-        bufferManager.FreePage(pageId)
+        self.bufferManager.FreePage(pageId)
         return slot
 
     def updateHeaderPage(self, pageId: PageId, tailleRecord: int):
@@ -285,7 +285,7 @@ class Relation:
         buffer.put_int(t2 - tailleRecord)
         
         buffer.dirty_flag = True
-        bufferManager.FreePage(self.headerPageId)
+        self.bufferManager.FreePage(self.headerPageId)
         
 
     def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int):
@@ -308,7 +308,7 @@ class Relation:
         buffer.put_int(tailleRecord)
 
         buffer.dirty_flag = True
-        bufferManager.FreePage(buffer.pageId)
+        self.bufferManager.FreePage(buffer.pageId)
         return slot_index
 
 
@@ -333,7 +333,7 @@ class Relation:
             liste.append(record)       
             
             buffer.set_position(indexRecord - 8)
-        bufferManager.FreePage(pageId)
+        self.bufferManager.FreePage(pageId)
         return liste
     
 
@@ -350,7 +350,7 @@ class Relation:
 
             liste.append(PageId(fidx,pidx))
             buffer.set_position(buffer.getPos() + 4)
-        bufferManager.FreePage(self.headerPageId)
+        self.bufferManager.FreePage(self.headerPageId)
         return liste
  
     def InsertRecord(self, record: Record):
@@ -401,7 +401,7 @@ class Relation:
             self.disk.DeAllocPage(PageId(fidx, pidx))
             headerPage.set_position(headerPage.getPos() + 4)
         self.disk.DeAllocPage(self.headerPageId)
-        bufferManager.FreePage(self.headerPageId)
+        self.bufferManager.FreePage(self.headerPageId)
         
     @classmethod
     def loadRelation(cls, name: str, diskManager, bufferManager, nomBD):

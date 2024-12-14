@@ -36,7 +36,7 @@ if __name__ == "__main__":
     r1_3 = Record(["Marc", 24, 654321])
 
     # Relation 2: nom | prix
-    relation2 = Relation("fruit", 
+    '''relation2 = Relation("fruit", 
                         2, 
                         [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("prix", Column.Float())],
                         buffManager.disk,
@@ -48,7 +48,6 @@ if __name__ == "__main__":
 
     ## Buffer
     buff = buffManager.getPage(PageId(0, 0))
-
     ## Record & Buffer 
     # Ecriture
     op1 = relation1.writeRecordToBuffer(r1_1, buff, 0)
@@ -57,9 +56,26 @@ if __name__ == "__main__":
     record = Record([]) 
     
     op2 = relation1.readFromBuffer(record, buff, 0)
+    '''
 
     ## Record & DataPage
     datapage_id1 = relation1.addDataPage()
+    datapage_id1 = relation1.addDataPage()
+    datapage_id1 = relation1.addDataPage()
+    datapage_id1 = relation1.addDataPage()
+    datapage_id1 = relation1.addDataPage()
+    datapage_id1 = relation1.addDataPage()
+    datapage_id1 = relation1.addDataPage()
+    datapage_id1 = relation1.addDataPage()
+    
+    h = buffManager.getPage(relation1.headerPageId)
+    nb = h.read_int()
+    print(nb)
+    for _ in range(nb):
+        print("fidx : ", h.read_int()) 
+        print("pidx : ",h.read_int())    
+        print("espace : ",h.read_int())    
+
 
     # Ecriture
     relation1.writeRecordToDataPage(r1_1, datapage_id1)
@@ -68,3 +84,4 @@ if __name__ == "__main__":
     
     for x in relation1.getRecordsInDataPage(datapage_id1):
         print(x.values)
+    buffManager.disk.SaveState()

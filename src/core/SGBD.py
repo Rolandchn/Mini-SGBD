@@ -9,7 +9,7 @@ from Relation import Relation
 import os
 from pathlib import Path
 from Record import Record
-
+import traceback
 class SGBD:
     def __init__(self, db_config:DBconfig):
         self.db_config = db_config
@@ -71,7 +71,7 @@ class SGBD:
         except IndexError as I:
             print("Arguments insufficient for command.", I)
         except Exception as e:
-            print(f"Erreur lors du traitement de la commande: {e}")
+            traceback.print_exc() 
     def processQuitCommand(self):
         # Sauvegarder l'état avant de quitter
         self.buffer_manager.FlushBuffers()

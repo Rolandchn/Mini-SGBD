@@ -41,7 +41,7 @@ class BufferManager:
         # cas où il y a une page identique
         for buffer in self.buffers:
             if pageId == buffer.pageId:
-                buffer.pin_count += 1
+                buffer.pin_count = 1
                 return buffer
             
             if buffer.pin_count != 0:
@@ -59,7 +59,7 @@ class BufferManager:
             free_buffer.pageId = pageId
 
             self.disk.ReadPage(pageId,free_buffer)
-            free_buffer.pin_count += 1
+            free_buffer.pin_count = 1
 
             return free_buffer
 
