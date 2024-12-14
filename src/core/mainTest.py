@@ -46,8 +46,8 @@ if __name__ == "__main__":
     r2_2 = Record(["Orange", 6])
     r2_3 = Record(["Banane", 5.32])
 
-    ## Buffer
-    buff = buffManager.getPage(PageId(0, 0))
+    ## Buffer du header
+    buff = buffManager.getPage(PageId(0, 2))
 
     ## Record & Buffer 
     # Ecriture
@@ -66,5 +66,3 @@ if __name__ == "__main__":
     relation1.writeRecordToDataPage(r1_2, datapage_id1)
     relation1.writeRecordToDataPage(r1_3, datapage_id1)
     
-    for x in relation1.getRecordsInDataPage(datapage_id1):
-        print(x.values)

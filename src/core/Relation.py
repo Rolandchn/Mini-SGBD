@@ -30,9 +30,9 @@ class Relation:
         if(buffer.read_char() == "#"): 
             buffer.set_position(0)
             buffer.put_int(0)
+            buffer.set_position(0)
             #remplacer write page par un dirty = true
             bufferManager.disk.WritePage(self.headerPageId, buffer)
-            buffer.set_position(0)
         self.bufferManager.disk.SaveState()
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
