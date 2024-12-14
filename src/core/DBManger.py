@@ -28,7 +28,8 @@ class DBManager:
     def setCurrentDatabase(self, name: str):
         if name in self.databases:
             self.current_database = name
-
+            return True
+        return False
     #Ajouter des tuples à la table active
     def addTableToCurrentDatabase(self, table: Relation):
         if self.current_database:
@@ -57,7 +58,7 @@ class DBManager:
         if self.current_database:
             self.databases[self.current_database].tables.clear()
 
-   #Supprimer tous les BDD
+    #Supprimer tous les BDD
     def removeDatabases(self):
         self.databases.clear()
         self.current_database = None
