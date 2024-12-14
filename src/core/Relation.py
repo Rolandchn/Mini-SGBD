@@ -254,7 +254,6 @@ class Relation:
 
 
     def writeRecordToDataPage(self, record: Record, pageId:PageId) -> RecordId:
-    def writeRecordToDataPage(self, record: Record, pageId:PageId) -> RecordId:
         """
         Opération: Ecrit le record sur un buffer et met à jour les informations du data page et du header page
         """
@@ -302,7 +301,6 @@ class Relation:
         self.bufferManager.FreePage(self.headerPageId)
         
 
-    def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int, recordId: RecordId):
     def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int, recordId: RecordId):
         # maj rouge
         buffer.set_position(self.disk.config.pagesize - 4)
