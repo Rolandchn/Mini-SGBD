@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from DBManger import DBManager
 from DiskManager import DiskManager
 from BufferManager import BufferManager
@@ -10,6 +10,11 @@ import os
 from pathlib import Path
 from Record import Record
 import traceback
+from Condition import Condition
+from ProjectOperator import ProjectOperator
+from RecordPrinter import RecordPrinter
+from SelectOperator import SelectOperator
+from RelationScanner import RelationScanner
 class SGBD:
     def __init__(self, db_config:DBconfig):
         self.db_config = db_config
@@ -70,6 +75,7 @@ class SGBD:
                 print("Unknown command")
         except IndexError as I:
             print("Arguments insufficient for command.", I)
+            traceback.print_exc()
         except Exception as e:
             traceback.print_exc() 
     def processQuitCommand(self):
@@ -208,41 +214,44 @@ class SGBD:
                 print(f"Table {table_name} does not exist.")
         else:
             print("No current database set.")
-    def processSelectCommand(self, command: str):
-        parts = command.split()
+    def processSelectCommand(self, parts: list[str]):
+        command = " ".join(parts)
         if len(parts) < 4 or parts[1].upper() != "FROM":
             print("Invalid SELECT command.")
             return
 
-        columns = parts[1].split(",")
-        table_name = parts[3]
+        columns = parts[0].split(",")
+        table_name = parts[2]
         conditions = self.parseConditions(command)
 
         if self.db_manager.current_database:
-            table = self.db_manager.current_database.tables.get(table_name)
+            table = self.db_manager.getTableFromCurrentDatabase(table_name)
             if table:
-                self.selectRecords(table, columns, conditions)
+                relation_scanner = RelationScanner(table)
+                select_operator = SelectOperator(relation_scanner, conditions, table)
+                if columns[0] == '*':
+                    columns = [col.name for col in table.columns]
+                project_operator = ProjectOperator(select_operator, columns, table)
+                printer = RecordPrinter(project_operator)
+                printer.print_records()
             else:
                 print(f"Table {table_name} does not exist.")
         else:
             print("No current database set.")
 
-    def selectRecords(self, table: Relation, columns: list[str], conditions: list):
-        all_records = table.GetAllRecords()
-        filtered_records = []
-
-        for record in all_records:
-            if all(condition.evaluate(record, table.columns) for condition in conditions):
-                filtered_records.append(record)
-
-        for record in filtered_records:
-            print("; ".join(record.values) + ".")
-        print(f"Total records={len(filtered_records)}")
-        
+    @staticmethod
+    def parseConditions(command: str) -> List[Condition]:
+        conditions = []
+        if "WHERE" in command:
+            condition_str = command.split("WHERE")[1]
+            condition_parts = condition_str.split("AND")
+            for condition_part in condition_parts:
+                conditions.append(Condition.from_string(condition_part))
+        return conditions
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
     sgbd.run()
-    
+        
 
 #TODO ne devrait pas afficher un log de succès tant que ça a pas marché
 #TODO desalouer les pages des bases et tables supprimées
