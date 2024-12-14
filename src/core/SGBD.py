@@ -138,9 +138,12 @@ class SGBD:
 
     def processListTablesCommand(self):
         tables = self.db_manager.listTablesInCurrentDatabase()
-        print("Tables in the current database:")
-        for table in tables:
-            print(table)
+        if tables:
+            print("Tables in the current database:")
+            for table in tables:
+                print(table)
+        else:
+            print("No tables found in the current database.")
 
     @staticmethod
     def parseColumns(columns_str: str) -> list[ColumnInfo]:
