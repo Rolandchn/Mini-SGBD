@@ -122,8 +122,10 @@ class SGBD:
             print("No tables to drop in the current database.")
 
     def processDropDatabasesCommand(self):
-        self.db_manager.removeDatabases()
-        print("All databases dropped.")
+        if self.db_manager.removeDatabases():
+            print("All databases dropped.")
+        else:
+            print("No databases to drop.")
 
     def processListDatabasesCommand(self):
         databases = self.db_manager.listDatabases()
