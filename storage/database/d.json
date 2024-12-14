@@ -1,0 +1,19 @@
+[
+    {
+        "name": "tb1",
+        "nb_columns": 1,
+        "columns": [
+            {
+                "name": "a",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            }
+        ],
+        "headerPageId": {
+            "fileIdx": 0,
+            "pageIdx": 0
+        }
+    }
+]

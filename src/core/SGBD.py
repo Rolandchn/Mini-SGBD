@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from DBManger import DBManager
 from DiskManager import DiskManager
 from BufferManager import BufferManager
@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from Record import Record
 import traceback
+from Condition import Condition
 class SGBD:
     def __init__(self, db_config:DBconfig):
         self.db_config = db_config
@@ -70,6 +71,7 @@ class SGBD:
                 print("Unknown command")
         except IndexError as I:
             print("Arguments insufficient for command.", I)
+            traceback.print_exc()
         except Exception as e:
             traceback.print_exc() 
     def processQuitCommand(self):
@@ -208,8 +210,8 @@ class SGBD:
                 print(f"Table {table_name} does not exist.")
         else:
             print("No current database set.")
-    def processSelectCommand(self, command: str):
-        parts = command.split()
+    def processSelectCommand(self, parts: list[str]):
+        command = "".join(parts)
         if len(parts) < 4 or parts[1].upper() != "FROM":
             print("Invalid SELECT command.")
             return
@@ -219,7 +221,7 @@ class SGBD:
         conditions = self.parseConditions(command)
 
         if self.db_manager.current_database:
-            table = self.db_manager.current_database.tables.get(table_name)
+            table = self.db_manager.getTableFromCurrentDatabase(table_name)
             if table:
                 self.selectRecords(table, columns, conditions)
             else:
@@ -227,7 +229,7 @@ class SGBD:
         else:
             print("No current database set.")
 
-    def selectRecords(self, table: Relation, columns: list[str], conditions: list):
+    def selectRecords(self, table: Relation, columns: List[str], conditions: List[Condition]):
         all_records = table.GetAllRecords()
         filtered_records = []
 
@@ -238,6 +240,16 @@ class SGBD:
         for record in filtered_records:
             print("; ".join(record.values) + ".")
         print(f"Total records={len(filtered_records)}")
+
+    @staticmethod
+    def parseConditions(command: str) -> List[Condition]:
+        conditions = []
+        if "WHERE" in command:
+            condition_str = command.split("WHERE")[1]
+            condition_parts = condition_str.split("AND")
+            for condition_part in condition_parts:
+                conditions.append(Condition.from_string(condition_part))
+        return conditions
         
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
