@@ -1,0 +1,26 @@
+[
+    {
+        "name": "Tab1",
+        "nb_columns": 2,
+        "columns": [
+            {
+                "name": "d",
+                "type": {
+                    "type": "Char",
+                    "size": 5
+                }
+            },
+            {
+                "name": "s",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            }
+        ],
+        "headerPageId": {
+            "fileIdx": 4,
+            "pageIdx": 1
+        }
+    }
+]
