@@ -1,10 +1,17 @@
 [
     {
-        "name": "tb1",
-        "nb_columns": 1,
+        "name": "TAB1",
+        "nb_columns": 2,
         "columns": [
             {
-                "name": "a",
+                "name": "A",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            },
+            {
+                "name": "B",
                 "type": {
                     "type": "Int",
                     "size": 4

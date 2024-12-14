@@ -386,7 +386,7 @@ class Relation:
         liste2 = []
         for dataPageId in liste:
             liste3 = self.getRecordsInDataPage(dataPageId)
-            liste2.append(liste3)
+            liste2.extend(liste3)
 
         return liste2
     
