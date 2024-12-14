@@ -196,7 +196,10 @@ class SGBD:
             if table:
                 record = Record(typed_values)
                 rid = table.InsertRecord(record)
-                print(f"Record inserted with RID: {rid}")
+                if rid is not None:
+                    print(f"Record inserted with RID: {rid}")
+                else:
+                    print("Failed to insert record.")
             else:
                 print(f"Table {table_name} does not exist.")
         else:
