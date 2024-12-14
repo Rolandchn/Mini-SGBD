@@ -68,8 +68,8 @@ class SGBD:
                 self.processSelectCommand(parts[1:])
             else:
                 print("Unknown command")
-        except IndexError:
-            print("Arguments insufficient for command.")
+        except IndexError as I:
+            print("Arguments insufficient for command.", I)
         except Exception as e:
             print(f"Erreur lors du traitement de la commande: {e}")
     def processQuitCommand(self):
