@@ -35,12 +35,14 @@ class DBManager:
         if self.current_database:
             print("table added")
             self.databases[self.current_database].addTable(table)
-
+            return True
+        return False
     #Retourner une table dans la BDD en cour(Active)
     def getTableFromCurrentDatabase(self, table_name: str) -> Optional[Relation]:
         if self.current_database:
             return self.databases[self.current_database].getTable(table_name)
-
+        else:
+            return None
     #Supprimer une table de la BDD courante (Activ)
     def removeTableFromCurrentDatabase(self, table_name: str):
         if self.current_database:
@@ -52,12 +54,15 @@ class DBManager:
             del self.databases[name]
             if self.current_database == name:
                 self.current_database = None
+                return True
+            return False
+        return False
 
     #Supprimer tous les tables la BDD courante (Activ)
     def removeTablesFromCurrentDatabase(self):
         if self.current_database:
             self.databases[self.current_database].tables.clear()
-
+            return True
     #Supprimer tous les BDD
     def removeDatabases(self):
         self.databases.clear()
