@@ -15,78 +15,95 @@ class DBManager:
         self.db_config = db_config
         self.bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
 
-    #Création d'une base de données
-    def createDatabase(self, name: str):
+    # Création d'une base de données
+    def createDatabase(self, name: str) -> bool:
         if name not in self.databases:
             print("database created")
             self.databases[name] = Database(name)
+            return True
         else:
-            raise ValueError("La base de données existe déjà")
-        
-            
-    #Activer une base de données
-    def setCurrentDatabase(self, name: str):
+            print(f"La base de données {name} existe déjà")
+            return False
+
+    # Activer une base de données
+    def setCurrentDatabase(self, name: str) -> bool:
         if name in self.databases:
             self.current_database = name
             return True
+        print(f"La base de données {name} n'existe pas")
         return False
-    #Ajouter des tuples à la table active
-    def addTableToCurrentDatabase(self, table: Relation):
+
+    # Ajouter des tuples à la table active
+    def addTableToCurrentDatabase(self, table: Relation) -> bool:
         if self.current_database:
             print("table added")
             self.databases[self.current_database].addTable(table)
             return True
+        print("Aucune base de données active")
         return False
-    #Retourner une table dans la BDD en cour(Active)
+
+    # Retourner une table dans la BDD en cours (Active)
     def getTableFromCurrentDatabase(self, table_name: str) -> Optional[Relation]:
         if self.current_database:
             return self.databases[self.current_database].getTable(table_name)
         else:
+            print("Aucune base de données active")
             return None
-    #Supprimer une table de la BDD courante (Activ)
-    def removeTableFromCurrentDatabase(self, table_name: str):
+
+    # Supprimer une table de la BDD courante (Active)
+    def removeTableFromCurrentDatabase(self, table_name: str) -> bool:
         if self.current_database:
             self.databases[self.current_database].removeTable(table_name)
+            return True
+        print("Aucune base de données active")
+        return False
 
-    #Supprimer la BDD
-    def removeDatabase(self, name: str):
+    # Supprimer la BDD
+    def removeDatabase(self, name: str) -> bool:
         if name in self.databases:
             del self.databases[name]
             if self.current_database == name:
                 self.current_database = None
-                return True
-            return False
+            return True
+        print(f"La base de données {name} n'existe pas")
         return False
 
-    #Supprimer tous les tables la BDD courante (Activ)
-    def removeTablesFromCurrentDatabase(self):
+    # Supprimer toutes les tables de la BDD courante (Active)
+    def removeTablesFromCurrentDatabase(self) -> bool:
         if self.current_database:
             self.databases[self.current_database].tables.clear()
             return True
-    #Supprimer tous les BDD
-    def removeDatabases(self):
+        print("Aucune base de données active")
+        return False
+
+    # Supprimer toutes les BDD
+    def removeDatabases(self) -> bool:
         self.databases.clear()
         self.current_database = None
+        return True
 
-    #Retourne la liste des BDD 
+    # Retourne la liste des BDD
     def listDatabases(self) -> List[str]:
         return list(self.databases.keys())
 
-    #Retourner ma liste des tables de la BDD courante (Active)
+    # Retourner ma liste des tables de la BDD courante (Active)
     def listTablesInCurrentDatabase(self) -> List[str]:
         if self.current_database:
             return self.databases[self.current_database].listTables()
+        print("Aucune base de données active")
         return []
 
-    def deleteDatabase(self, name: str):
+    def deleteDatabase(self, name: str) -> bool:
         """
         Supprime une base de données du dictionnaire.
         """
         if name in self.databases:
             del self.databases[name]
             print(f"Database {name} removed from dictionary")
+            return True
         else:
-            raise ValueError("La base de données n'existe pas")
+            print(f"La base de données {name} n'existe pas")
+            return False
 
     def saveState(self):
         """
@@ -187,8 +204,7 @@ class DBManager:
             print(f"Fichier {db_file_path} supprimé")
         else:
             print(f"Le fichier {db_file_path} n'existe pas")
-            
-            
+
     def loadState(self):
         """
         Charge l'état des bases de données à partir du fichier principal db.save.json et leurs fichiers respectifs.
@@ -240,5 +256,3 @@ class DBManager:
         saved_database_names = set(saved_data)
         for db_name in current_database_names - saved_database_names:
             del self.databases[db_name]
-            
-#tous les méthode remove doit etre revu !!!!
