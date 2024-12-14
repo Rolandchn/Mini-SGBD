@@ -353,7 +353,7 @@ class Relation:
         return liste
     
     def InsertRecord(self, record: Record):
-        size = self.writeRecordToBuffer(record,self.bufferManager.getPage(self.headerPageId),0)
+        size = self.getRecordSize(record)
         self.bufferManager.FreePage(self.headerPageId)
         freepage = self.getFreeDataPageId(size)
         if freepage is not None:
@@ -362,6 +362,29 @@ class Relation:
             freepage = self.addDataPage()
             self.writeRecordToDataPage(record, freepage)
 
+    def getRecordSize(self, record: Record) -> int:
+        """
+        Opération: Calcule la taille totale d'un record
+        """
+        total_size = 0
+        has_varchar = self.has_varchar(self.columns)
+
+        if has_varchar:
+            # Ajouter la taille des offsets
+            total_size += 4 * (self.nb_column + 1)
+
+        for column, value in zip(self.columns, record.values):
+            if isinstance(column.type, Column.Int):
+                total_size += 4
+            elif isinstance(column.type, Column.Float):
+                total_size += 4
+            elif isinstance(column.type, Column.Char):
+                total_size += column.type.size
+            elif isinstance(column.type, Column.VarChar):
+                total_size += len(value)
+
+        return total_size
+    
     def GetAllRecords(self):
         liste = self.getDataPages()
         liste2 = []
@@ -458,7 +481,7 @@ if __name__ == "__main__":
     record1 = Record([1, 4])
     #relation = Relation("test6", 2, liste, bufferManager.disk, bufferManager) 
     record2 = Record([])
-    relation = Relation.loadRelation("test6", bufferManager.disk, bufferManager, "A")
+    relation = Relation.loadRelation("Tab1", bufferManager.disk, bufferManager, "A")
     '''print(f"Relation loaded: {relation.name}, Columns: {relation.nb_column}, HeaderPageId: {relation.headerPageId}")
 
     buff = bufferManager.getPage(PageId(0, 0))
@@ -476,7 +499,7 @@ if __name__ == "__main__":
 
     print(op2)
     '''
-
+    relation.InsertRecord(record1)
     print("a")
     relation.GetAllRecords()
     print("b")
