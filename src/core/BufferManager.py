@@ -92,7 +92,7 @@ class BufferManager:
         
         self.disk.ReadPage(pageId,buffer)
 
-        buffer.pin_count += 1
+        buffer.pin_count = 1
 
         return buffer
 
@@ -104,7 +104,7 @@ class BufferManager:
         for buffer in self.buffers:
             if pageId == buffer.pageId:
                 # valeur initiale 0 car on utilise qu'un seul processus
-                buffer.pin_count -= 1
+                buffer.pin_count = 0
 
                 self.free_buffers.append(buffer)
 
