@@ -3,6 +3,7 @@ import Column
 from PageId import PageId
 from Buffer import Buffer
 from Record import Record
+from RecordId import RecordId
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 import os
@@ -253,9 +254,11 @@ class Relation:
 
 
     def writeRecordToDataPage(self, record: Record, pageId:PageId) -> RecordId:
+    def writeRecordToDataPage(self, record: Record, pageId:PageId) -> RecordId:
         """
         Opération: Ecrit le record sur un buffer et met à jour les informations du data page et du header page
         """
+        recordId = RecordId(pageId)
         buffer = self.bufferManager.getPage(pageId)
         recordId = RecordId(pageId)
         
@@ -266,6 +269,7 @@ class Relation:
         positionRecord = buffer.read_int()
         tailleRecord = self.writeRecordToBuffer(record, buffer, positionRecord)
         
+        self.updateDataPage(buffer, positionRecord, tailleRecord, recordId)
         self.updateDataPage(buffer, positionRecord, tailleRecord, recordId)
         self.updateHeaderPage(pageId, tailleRecord)
 
@@ -298,6 +302,7 @@ class Relation:
         self.bufferManager.FreePage(self.headerPageId)
         
 
+    def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int, recordId: RecordId):
     def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int, recordId: RecordId):
         # maj rouge
         buffer.set_position(self.disk.config.pagesize - 4)
@@ -384,6 +389,7 @@ class Relation:
     def getRecordSize(self, record: Record) -> int:
         """
         Opération: Calcule la taille totale d'un record
+        Sortie: la taille du record
         """
         total_size = 0
 
