@@ -26,14 +26,13 @@ class Relation:
         #Cas ou relation existe pas, allouer une nouvelle page
         if self.headerPageId is None:
             self.headerPageId = self.disk.AllocPage()
+            print(1)
             
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
         buffer.put_int(0)
-        #remplacer write page par un dirty = true
         self.bufferManager.disk.WritePage(self.headerPageId, buffer)
-        buffer.set_position(0)
-        buffer.dirty_flag = False
+        buffer.dirty_flag = True
         self.bufferManager.FreePage(self.headerPageId)
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
@@ -231,9 +230,8 @@ class Relation:
         
         """
         buffer = self.bufferManager.getPage(self.headerPageId)
-        
+        buffer.set_position(0)
         n = buffer.read_int()
-        print(n) 
         for _ in range(n):
             fidx = buffer.read_int()
             pidx = buffer.read_int()
@@ -468,46 +466,3 @@ class Relation:
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
 
-if __name__ == "__main__":
-    # Initialisation du BufferManager et du DiskManager
-    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-    bufferManager.disk.LoadState()
-
-    # Création d'une nouvelle relation
-    columns = [Column.ColumnInfo("id", Column.Int()), Column.ColumnInfo("name", Column.VarChar(50))]
-    relation = Relation("TestTable", len(columns), columns, bufferManager.disk, bufferManager)
-
-    # Vérification de l'initialisation de la page d'en-tête
-    print(relation.headerPageId)
-    n = bufferManager.getPage(relation.headerPageId)
-    nb = n.read_int()
-    print(nb)
-
-    # Ajout de quelques pages de données
-    for _ in range(5):
-        relation.addDataPage()
-
-    # Tester la méthode getFreeDataPageId
-    record = Record([1, "Alice"])
-    size = relation.getRecordSize(record)
-    free_page_id = relation.getFreeDataPageId(size)
-
-    if free_page_id:
-        print(f"Free page found: {free_page_id}")
-    else:
-        print("No free page found with sufficient space.")
-    free_page_id = relation.getFreeDataPageId(size)
-
-    if free_page_id:
-        print(f"Free page found: {free_page_id}")
-    else:
-        print("No free page found with sufficient space.")
-    free_page_id = relation.getFreeDataPageId(size)
-
-    if free_page_id:
-        print(f"Free page found: {free_page_id}")
-    else:
-        print("No free page found with sufficient space.")
-
-    # Sauvegarde de l'état
-    bufferManager.disk.SaveState()

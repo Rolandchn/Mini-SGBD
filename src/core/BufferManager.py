@@ -87,7 +87,7 @@ class BufferManager:
         
         if buffer.dirty_flag:
             self.disk.WritePage(buffer.pageId, buffer)
-
+            buffer.dirty_flag = False
         buffer.pageId = pageId
         
         self.disk.ReadPage(pageId,buffer)

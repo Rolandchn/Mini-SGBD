@@ -88,6 +88,7 @@ class DiskManager:
         """ 
         Opération: Ecrit le buffer dans un fichier de donnée.
         """
+        
         filename = os.path.join(dbpath, f"F{pageId.fileIdx}.rsdb")
         
         pagebyte = self.config.pagesize * pageId.pageIdx
