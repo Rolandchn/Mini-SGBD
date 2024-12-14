@@ -32,42 +32,46 @@ class SGBD:
 
     def processCommand(self, command: str):
         # Analyser et traiter la commande
-        parts = command.split()
-        if not parts:
-            return
+        try:
+            parts = command.split()
+            if not parts:
+                return
 
-        cmd = parts[0].upper()
-        if cmd == "CREATE":
-            if parts[1].upper() == "DATABASE":
-                self.processCreateDatabaseCommand(parts[2])
-            elif parts[1].upper() == "TABLE":
-                self.processCreateTableCommand(parts[2:])
-        elif cmd == "SET":
-            if parts[1].upper() == "DATABASE":
-                self.processSetDatabaseCommand(parts[2])
-        elif cmd == "DROP":
-            if parts[1].upper() == "DATABASE":
-                self.processDropDatabaseCommand(parts[2])
-            elif parts[1].upper() == "TABLE":
-                self.processDropTableCommand(parts[2])
-            elif parts[1].upper() == "TABLES":
-                self.processDropTablesCommand()
-            elif parts[1].upper() == "DATABASES":
-                self.processDropDatabasesCommand()
-        elif cmd == "LIST":
-            if parts[1].upper() == "DATABASES":
-                self.processListDatabasesCommand()
-            elif parts[1].upper() == "TABLES":
-                self.processListTablesCommand()
-        elif cmd == "INSERT":        
-            self.processInsertCommand(command)
-        elif cmd == "BULKINSERT":
-            self.processBulkInsertCommand(parts[1:])
-        elif cmd == "SELECT":
-            self.processSelectCommand(parts[1:])
-        else:
-            print("Unknown command")
-
+            cmd = parts[0].upper()
+            if cmd == "CREATE":
+                if parts[1].upper() == "DATABASE":
+                    self.processCreateDatabaseCommand(parts[2])
+                elif parts[1].upper() == "TABLE":
+                    self.processCreateTableCommand(parts[2:])
+            elif cmd == "SET":
+                if parts[1].upper() == "DATABASE":
+                    self.processSetDatabaseCommand(parts[2])
+            elif cmd == "DROP":
+                if parts[1].upper() == "DATABASE":
+                    self.processDropDatabaseCommand(parts[2])
+                elif parts[1].upper() == "TABLE":
+                    self.processDropTableCommand(parts[2])
+                elif parts[1].upper() == "TABLES":
+                    self.processDropTablesCommand()
+                elif parts[1].upper() == "DATABASES":
+                    self.processDropDatabasesCommand()
+            elif cmd == "LIST":
+                if parts[1].upper() == "DATABASES":
+                    self.processListDatabasesCommand()
+                elif parts[1].upper() == "TABLES":
+                    self.processListTablesCommand()
+            elif cmd == "INSERT":        
+                self.processInsertCommand(command)
+            elif cmd == "BULKINSERT":
+                self.processBulkInsertCommand(parts[1:])
+            elif cmd == "SELECT":
+                self.processSelectCommand(parts[1:])
+            else:
+                print("Unknown command")
+        except IndexError:
+            print("Arguments insufficient for command.")
+        except Exception as e:
+            print(f"Erreur lors du traitement de la commande: {e}")
     def processQuitCommand(self):
         # Sauvegarder l'état avant de quitter
         self.buffer_manager.FlushBuffers()
@@ -98,7 +102,7 @@ class SGBD:
             if self.db_manager.addTableToCurrentDatabase(table):
                 print(f"Table {table_name} created in the current database.")
             else:
-                print(f"Failed to create table {table_name} in the current database.")
+                print(f"Failed to create table {table_name} in the current database, Check if Database is set.")
         else:
             print("Invalid column definitions.")
 
