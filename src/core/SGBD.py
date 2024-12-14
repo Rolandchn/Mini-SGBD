@@ -129,9 +129,12 @@ class SGBD:
 
     def processListDatabasesCommand(self):
         databases = self.db_manager.listDatabases()
-        print("Databases:")
-        for db in databases:
-            print(db)
+        if databases:
+            print("Databases:")
+            for db in databases:
+                print(db)
+        else:
+            print("No databases found.")
 
     def processListTablesCommand(self):
         tables = self.db_manager.listTablesInCurrentDatabase()
