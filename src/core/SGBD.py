@@ -80,31 +80,46 @@ class SGBD:
         print(f"Database {db_name} created.")
 
     def processSetDatabaseCommand(self, db_name: str):
-        self.db_manager.setCurrentDatabase(db_name)
-        print(f"Database set to {db_name}.")
+        if self.db_manager.setCurrentDatabase(db_name):
+            print(f"Database set to {db_name}.")
+        else:
+            print(f"Database {db_name} does not exist.")
+
 
     def processCreateTableCommand(self, parts: list[str]):
-        '''if len(parts) < 4:
+        if len(parts) < 2:
             print("Invalid CREATE TABLE command.")
-            return'''
+            return
 
         table_name = parts[0]
         columns = self.parseColumns(parts[1])
-        table = Relation(table_name, len(columns), columns, self.disk_manager, self.buffer_manager)
-        self.db_manager.addTableToCurrentDatabase(table)
-        print(f"Table {table_name} created in the current database.")
+        if columns:
+            table = Relation(table_name, len(columns), columns, self.disk_manager, self.buffer_manager)
+            if self.db_manager.addTableToCurrentDatabase(table):
+                print(f"Table {table_name} created in the current database.")
+            else:
+                print(f"Failed to create table {table_name} in the current database.")
+        else:
+            print("Invalid column definitions.")
+
 
     def processDropDatabaseCommand(self, db_name: str):
-        self.db_manager.removeDatabase(db_name)
-        print(f"Database {db_name} dropped.")
+        if self.db_manager.removeDatabase(db_name):
+            print(f"Database {db_name} dropped.")
+        else:
+            print(f"Database {db_name} does not exist.")
 
     def processDropTableCommand(self, table_name: str):
-        self.db_manager.removeTableFromCurrentDatabase(table_name)
-        print(f"Table {table_name} dropped from the current database.")
+        if self.db_manager.removeTableFromCurrentDatabase(table_name):
+            print(f"Table {table_name} dropped from the current database.")
+        else:
+            print(f"Table {table_name} does not exist in the current database.")
 
     def processDropTablesCommand(self):
-        self.db_manager.removeTablesFromCurrentDatabase()
-        print("All tables dropped from the current database.")
+        if self.db_manager.removeTablesFromCurrentDatabase():
+            print("All tables dropped from the current database.")
+        else:
+            print("No tables to drop in the current database.")
 
     def processDropDatabasesCommand(self):
         self.db_manager.removeDatabases()
