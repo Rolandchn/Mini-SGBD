@@ -294,12 +294,13 @@ class Relation:
         # maj vert 1
         buffer.set_position(self.disk.config.pagesize - 16)
         slot_index = 0
-        while buffer.read_int() != -1:
+        while buffer.read_int() != -1 and slot_index < self.disk.config.nb_slots:
             buffer.set_position(buffer.getPos() - 12)
             slot_index += 1
 
         else:
             buffer.set_position(buffer.getPos() - 4)
+        
         
         # maj vert 2 
         buffer.put_int(positionRecord)
