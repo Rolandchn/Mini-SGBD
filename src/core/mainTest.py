@@ -15,6 +15,20 @@ import os
 from pathlib import Path
 
 
+def afficher_headerPage(relation:Relation):
+    buff_headerPage = buffManager.getPage(relation.headerPageId)
+    print(buff_headerPage.getByte())
+    buff_headerPage.set_position(0)
+    
+    nb = buff_headerPage.read_int()
+
+    print(nb)
+    
+    for _ in range(nb):
+        print(f"pageId : {buff_headerPage.read_int()}, {buff_headerPage.read_int()}", ) 
+        print(f"espace : {buff_headerPage.read_int()}")    
+
+
 if __name__ == "__main__":
     ## File path
     DB_path = os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")
@@ -23,6 +37,7 @@ if __name__ == "__main__":
     ## Init
     buffManager = BufferManager.setup(DB_path)
     buffManager.disk.LoadState()
+
     ## Relation
     # Relation 1: nom | age | id
     relation1 = Relation("camarade", 
@@ -30,41 +45,13 @@ if __name__ == "__main__":
                         [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("age", Column.Int()), Column.ColumnInfo("id", Column.Int())],
                         buffManager.disk,
                         buffManager)
-    h = buffManager.getPage(relation1.headerPageId)
-    print(relation1.headerPageId)
-    h.set_position(0)
-    nb = h.read_int()
-    h.set_position(0)
-    print(nb)
-
-    relation1.addDataPage()
-    relation1.addDataPage()
-    relation1.addDataPage()
-    relation1.addDataPage()
-    relation1.addDataPage()
-    relation1.addDataPage()
-
-    h = buffManager.getPage(relation1.headerPageId)
-    h.set_position(0)
-    nb = h.read_int()
-
-    print(nb)
-    for _ in range(nb):
-        print("fidx : ", h.read_int()) 
-        print("pidx : ",h.read_int())    
-        print("espace : ",h.read_int())
     
-    l1 = relation1.getDataPages()
-    print("a",l1)
-    print("b",relation1.getFreeDataPageId(1))
-    '''
     r1_1 = Record(["Leo", 21, 123456])
     r1_2 = Record(["Hector", 22, 121212])
     r1_3 = Record(["Marc", 24, 654321])
 
     # Relation 2: nom | prix
-    '''
-    '''relation2 = Relation("fruit", 
+    relation2 = Relation("fruit", 
                         2, 
                         [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("prix", Column.Float())],
                         buffManager.disk,
@@ -74,43 +61,25 @@ if __name__ == "__main__":
     r2_2 = Record(["Orange", 6])
     r2_3 = Record(["Banane", 5.32])
 
-    ## Buffer
-    buff = buffManager.getPage(PageId(0, 0))
-    ## Record & Buffer 
+    ## Record & DataPage
     # Ecriture
-    op1 = relation1.writeRecordToBuffer(r1_1, buff, 0)
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+    relation1.InsertRecord(r1_1)
 
-    # Lecture
-    record = Record([]) 
-    
-    op2 = relation1.readFromBuffer(record, buff, 0)
-    '''
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+    relation1.InsertRecord(r1_1)
 
-    '''## Record & DataPage
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    
-    h = buffManager.getPage(relation1.headerPageId)
-    nb = h.read_int()
-    print(nb)
-    for _ in range(nb):
-        print("fidx : ", h.read_int()) 
-        print("pidx : ",h.read_int())    
-        print("espace : ",h.read_int())    
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
 
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_2)
 
-    # Ecriture
-    relation1.writeRecordToDataPage(r1_1, datapage_id1)
-    relation1.writeRecordToDataPage(r1_2, datapage_id1)
-    relation1.writeRecordToDataPage(r1_3, datapage_id1)
-    
-    for x in relation1.getRecordsInDataPage(datapage_id1):
-        print(x.values)
-    '''
-    buffManager.disk.SaveState()
+    afficher_headerPage(relation1)
+
+    #buffManager.disk.SaveState()

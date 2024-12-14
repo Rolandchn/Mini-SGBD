@@ -26,14 +26,19 @@ class Relation:
         #Cas ou relation existe pas, allouer une nouvelle page
         if self.headerPageId is None:
             self.headerPageId = self.disk.AllocPage()
-            print(1)
             
         buffer = self.bufferManager.getPage(self.headerPageId)
+        
         buffer.set_position(0)
         buffer.put_int(0)
+        
         self.bufferManager.disk.WritePage(self.headerPageId, buffer)
+        
         buffer.dirty_flag = True
+        
         self.bufferManager.FreePage(self.headerPageId)
+
+
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
@@ -225,6 +230,7 @@ class Relation:
         self.bufferManager.FreePage(dataPageId)
         return dataPageId
 
+
     def getFreeDataPageId(self, sizeRecord):
         """ 
         
@@ -232,35 +238,41 @@ class Relation:
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
         n = buffer.read_int()
+        
         for _ in range(n):
-            fidx = buffer.read_int()
-            pidx = buffer.read_int()
-            espaceLibre = buffer.read_int()
+            pageId = PageId(buffer.read_int(), buffer.read_int())
             
-            if espaceLibre >= sizeRecord:
-                return PageId(fidx, pidx)
+            if sizeRecord <= buffer.read_int() and self.has_freeSlot(pageId):
+                self.bufferManager.FreePage(self.headerPageId)
+
+                return pageId
+       
         self.bufferManager.FreePage(self.headerPageId)
-        return None
+
+        return self.addDataPage()
 
 
-    def writeRecordToDataPage(self, record: Record, pageId:PageId) -> None:
+    def writeRecordToDataPage(self, record: Record, pageId:PageId) -> RecordId:
         """
         Opération: Ecrit le record sur un buffer et met à jour les informations du data page et du header page
         """
         buffer = self.bufferManager.getPage(pageId)
+        recordId = RecordId(pageId)
         
-        # write record
         # On récupère "position début record disponible" car on ne connait pas quand commence le datapage si il est rempli (si le datapage est vide alors, position est juste 0)
         buffer.set_position(self.disk.config.pagesize - 4) 
+        
         # position début Rec M: pagesize - 4 - 4 - 8 * nb_slots
         positionRecord = buffer.read_int()
         tailleRecord = self.writeRecordToBuffer(record, buffer, positionRecord)
         
-        slot = self.updateDataPage(buffer, positionRecord, tailleRecord)
+        self.updateDataPage(buffer, positionRecord, tailleRecord, recordId)
         self.updateHeaderPage(pageId, tailleRecord)
 
         self.bufferManager.FreePage(pageId)
-        return slot
+        
+        return recordId
+
 
     def updateHeaderPage(self, pageId: PageId, tailleRecord: int):
         buffer = self.bufferManager.getPage(self.headerPageId)
@@ -286,7 +298,7 @@ class Relation:
         self.bufferManager.FreePage(self.headerPageId)
         
 
-    def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int):
+    def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int, recordId: RecordId):
         # maj rouge
         buffer.set_position(self.disk.config.pagesize - 4)
         buffer.put_int(positionRecord + tailleRecord)
@@ -294,6 +306,7 @@ class Relation:
         # maj vert 1
         buffer.set_position(self.disk.config.pagesize - 16)
         slot_index = 0
+        
         while buffer.read_int() != -1 and slot_index < self.disk.config.nb_slots:
             buffer.set_position(buffer.getPos() - 12)
             slot_index += 1
@@ -301,15 +314,15 @@ class Relation:
         else:
             buffer.set_position(buffer.getPos() - 4)
         
-        
+        recordId.setSlotIdx(slot_index)
+
         # maj vert 2 
         buffer.put_int(positionRecord)
         buffer.put_int(tailleRecord)
 
         buffer.dirty_flag = True
         self.bufferManager.FreePage(buffer.pageId)
-        return slot_index
-
+        
 
     def getRecordsInDataPage(self, pageId: PageId) -> List[Record]:
         """
@@ -324,7 +337,9 @@ class Relation:
         liste = []
         record = Record()
 
-        while(positionRecord := buffer.read_int()) != -1:
+        index = 0
+
+        while index < self.disk.config.nb_slots and (positionRecord := buffer.read_int()) != -1:
             indexRecord = buffer.getPos() - 4
             
             self.readFromBuffer(record, buffer, positionRecord) 
@@ -332,7 +347,11 @@ class Relation:
             liste.append(record)       
             
             buffer.set_position(indexRecord - 8)
+
+            index += 1
+        
         self.bufferManager.FreePage(pageId)
+        
         return liste
     
 
@@ -349,37 +368,54 @@ class Relation:
 
             liste.append(PageId(fidx,pidx))
             buffer.set_position(buffer.getPos() + 4)
+        
         self.bufferManager.FreePage(self.headerPageId)
+        
         return liste
  
+
     def InsertRecord(self, record: Record):
-        size = self.getRecordSize(record)
-        freepage = self.getFreeDataPageId(size)
-        if freepage is not None:
-            slot = self.writeRecordToDataPage(record, freepage)
-        else:
-            freepage = self.addDataPage()
-            slot = self.writeRecordToDataPage(record, freepage)
-        return RecordId(freepage, slot)    
+        print("new insert")
+        freeDataPage = self.getFreeDataPageId(self.getRecordSize(record))
         
+        return self.writeRecordToDataPage(record, freeDataPage)
+        
+
     def getRecordSize(self, record: Record) -> int:
         """
         Opération: Calcule la taille totale d'un record
         """
         total_size = 0
-        has_varchar = self.has_varchar(self.columns)
-        if has_varchar:
+
+        if self.has_varchar(self.columns):
             total_size += 4 * (self.nb_column + 1)
+
         for column, value in zip(self.columns, record.values):
-            if isinstance(column.type, Column.Int):
-                total_size += 4
-            elif isinstance(column.type, Column.Float):
-                total_size += 4
-            elif isinstance(column.type, Column.Char):
-                total_size += column.type.size
-            elif isinstance(column.type, Column.VarChar):
+            if isinstance(column.type, Column.VarChar):
                 total_size += len(value)
+
+            else:
+                total_size += column.type.size
+
         return total_size
+
+
+    def has_freeSlot(self, dataPageId: PageId) -> bool:
+        buffer = self.bufferManager.getPage(dataPageId)
+
+        buffer.set_position(self.disk.config.pagesize - 16)
+
+        for i in range(self.disk.config.nb_slots):
+            if buffer.read_int() == -1:
+                self.bufferManager.FreePage(buffer.pageId)
+                return True
+            
+            buffer.set_position(buffer.getPos() - 12)
+
+        self.bufferManager.FreePage(buffer.pageId)
+
+        return False
+
 
     def GetAllRecords(self):
         liste = self.getDataPages()
