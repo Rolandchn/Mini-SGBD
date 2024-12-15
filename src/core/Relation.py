@@ -322,9 +322,9 @@ class Relation:
         buffer.set_position(self.disk.config.pagesize - 16)
 
         liste = []
-        record = Record()
 
         while(positionRecord := buffer.read_int()) != -1:
+            record = Record()
             indexRecord = buffer.getPos() - 4
             
             self.readFromBuffer(record, buffer, positionRecord) 
@@ -386,7 +386,7 @@ class Relation:
         liste2 = []
         for dataPageId in liste:
             liste3 = self.getRecordsInDataPage(dataPageId)
-            liste2.extend(liste3)
+            liste2.append(liste3)
 
         return liste2
     
