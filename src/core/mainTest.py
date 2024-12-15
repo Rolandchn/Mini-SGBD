@@ -1,7 +1,5 @@
 
-from DBconfig import DBconfig
 from BufferManager import BufferManager
-from DiskManager import DiskManager
 
 from Buffer import Buffer
 from PageId import PageId
@@ -15,6 +13,20 @@ import os
 from pathlib import Path
 
 
+def afficher_headerPage(relation:Relation):
+    buff_headerPage = buffManager.getPage(relation.headerPageId)
+    print(buff_headerPage.getByte())
+    buff_headerPage.set_position(0)
+    
+    nb = buff_headerPage.read_int()
+
+    print(nb)
+    
+    for _ in range(nb):
+        print(f"pageId : {buff_headerPage.read_int()}, {buff_headerPage.read_int()}", ) 
+        print(f"espace : {buff_headerPage.read_int()}")    
+
+
 if __name__ == "__main__":
     ## File path
     DB_path = os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")
@@ -23,41 +35,14 @@ if __name__ == "__main__":
     ## Init
     buffManager = BufferManager.setup(DB_path)
     buffManager.disk.LoadState()
+
     ## Relation
     # Relation 1: nom | age | id
-    '''relation1 = Relation("camarade", 
+    relation1 = Relation("camarade", 
                         3, 
                         [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("age", Column.Int()), Column.ColumnInfo("id", Column.Int())],
                         buffManager.disk,
                         buffManager)
-    h = buffManager.getPage(relation1.headerPageId)'''
-    relationT = Relation.loadRelation("TAB1", buffManager.disk, buffManager,"DB1")
-    print(relationT.getRecordsInDataPage(PageId(1,0)))
-    '''h.set_position(0)
-    nb = h.read_int()
-    h.set_position(0)
-    print(nb)
-
-    relation1.addDataPage()
-    relation1.addDataPage()
-    relation1.addDataPage()
-    relation1.addDataPage()
-    relation1.addDataPage()
-    relation1.addDataPage()
-
-    h = buffManager.getPage(relation1.headerPageId)
-    h.set_position(0)
-    nb = h.read_int()
-
-    print(nb)
-    for _ in range(nb):
-        print("fidx : ", h.read_int()) 
-        print("pidx : ",h.read_int())    
-        print("espace : ",h.read_int())
-    
-    l1 = relation1.getDataPages()
-    print("a",l1)
-    print("b",relation1.getFreeDataPageId(1))
     
     r1_1 = Record(["Leo", 21, 123456])
     r1_2 = Record(["Hector", 22, 121212])
@@ -69,24 +54,31 @@ if __name__ == "__main__":
                         [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("prix", Column.Float())],
                         buffManager.disk,
                         buffManager)
-
+    
     r2_1 = Record(["Pomme", 6.5])
     r2_2 = Record(["Orange", 6])
     r2_3 = Record(["Banane", 5.32])
 
-    ## Buffer
-    #PageId(0, 0) contient le headerPage relation 1 
-    #PageId(0, 1) contient le headerPage relation 2 
-
     ## Record & DataPage
-    dataPageId1 = relation1.addDataPage()
-
     # Ecriture
-    relation1.writeRecordToDataPage(r1_1, dataPageId1)
-    relation1.writeRecordToDataPage(r1_2, dataPageId1)
-    relation1.writeRecordToDataPage(r1_3, dataPageId1)
-    
-    for x in relation1.getRecordsInDataPage(dataPageId1):
-        print(x.values)
 
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
     
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+
+    for record in relation1.GetAllRecords():
+        print(record.values)
+
+    #buffManager.disk.SaveState()
