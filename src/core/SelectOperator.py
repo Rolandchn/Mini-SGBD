@@ -4,7 +4,6 @@ from Condition import Condition
 from Record import Record
 from Relation import Relation
 class SelectOperator(IRecordIterator):
-
     def __init__(self, iterator: IRecordIterator, conditions: List[Condition], relation: 'Relation'):
         self.iterator = iterator
         self.conditions = conditions

@@ -246,8 +246,11 @@ class SGBD:
             condition_str = command.split("WHERE")[1]
             condition_parts = condition_str.split("AND")
             for condition_part in condition_parts:
+                print(condition_part)
                 conditions.append(Condition.from_string(condition_part))
         return conditions
+    
+    
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
     sgbd.run()
