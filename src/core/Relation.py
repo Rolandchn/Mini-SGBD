@@ -245,7 +245,7 @@ class Relation:
 
     def writeRecordToDataPage(self, record: Record, pageId:PageId) -> None:
         """
-        Opération: Ecrit le record sur un buffer et met à jour les informations du data page et du header page
+        Opération: Ecrit le record sur le buffer du datapage et met à jour les informations du data page et du header page
         """
         buffer = self.bufferManager.getPage(pageId)
         

@@ -75,42 +75,18 @@ if __name__ == "__main__":
     r2_3 = Record(["Banane", 5.32])
 
     ## Buffer
-    buff = buffManager.getPage(PageId(0, 0))
-    ## Record & Buffer 
-    # Ecriture
-    op1 = relation1.writeRecordToBuffer(r1_1, buff, 0)
+    #PageId(0, 0) contient le headerPage relation 1 
+    #PageId(0, 1) contient le headerPage relation 2 
 
-    # Lecture
-    record = Record([]) 
-    
-    op2 = relation1.readFromBuffer(record, buff, 0)
-    '''
-
-    '''## Record & DataPage
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    datapage_id1 = relation1.addDataPage()
-    
-    h = buffManager.getPage(relation1.headerPageId)
-    nb = h.read_int()
-    print(nb)
-    for _ in range(nb):
-        print("fidx : ", h.read_int()) 
-        print("pidx : ",h.read_int())    
-        print("espace : ",h.read_int())    
-
+    ## Record & DataPage
+    dataPageId1 = relation1.addDataPage()
 
     # Ecriture
-    relation1.writeRecordToDataPage(r1_1, datapage_id1)
-    relation1.writeRecordToDataPage(r1_2, datapage_id1)
-    relation1.writeRecordToDataPage(r1_3, datapage_id1)
+    relation1.writeRecordToDataPage(r1_1, dataPageId1)
+    relation1.writeRecordToDataPage(r1_2, dataPageId1)
+    relation1.writeRecordToDataPage(r1_3, dataPageId1)
     
-    for x in relation1.getRecordsInDataPage(datapage_id1):
+    for x in relation1.getRecordsInDataPage(dataPageId1):
         print(x.values)
-    '''
-    buffManager.disk.SaveState()
+
+    
