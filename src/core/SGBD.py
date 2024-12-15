@@ -256,5 +256,5 @@ if __name__ == "__main__":
 #TODO ne devrait pas afficher un log de succès tant que ça a pas marché
 #TODO desalouer les pages des bases et tables supprimées
 #TODO revoir la condition de create table
-
+#TODO revoir la condition de insert (on peut pas insérer des record avec chat de taille 1 (taille de 2) mais on peut inserer plus de 2 char)
 #REMARQUE : on peut pas mettre d'accents dans les records
