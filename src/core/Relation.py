@@ -226,6 +226,19 @@ class Relation:
 
         buffer_dataPage.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
 
+        for _ in range(self.disk.config.nb_slots):
+            buffer_dataPage.put_int(-1)
+            buffer_dataPage.put_int(0)
+            
+        buffer_dataPage.put_int(self.disk.config.nb_slots)
+        buffer_dataPage.put_int(0)
+        
+        buffer_dataPage.dirty_flag = True
+        self.bufferManager.FreePage(dataPageId)
+
+        return dataPageId
+
+
 
     def getFreeDataPageId(self, sizeRecord) -> PageId:
         """ 
@@ -233,13 +246,11 @@ class Relation:
         Sortie: la PageId d'une dataPage disponible ou le PageId d'une nouvelle dataPage   
         """
         buffer_headerPage = self.bufferManager.getPage(self.headerPageId)
-        print("bufferManager: ",self.bufferManager.buffers)
         buffer_headerPage.set_position(0)
         n = buffer_headerPage.read_int()
+
         for _ in range(n):
-            print(buffer_headerPage)
             pageId = PageId(buffer_headerPage.read_int(), buffer_headerPage.read_int())
-            print(pageId, buffer_headerPage.getPos())
             
             if sizeRecord <= buffer_headerPage.read_int() and self.has_freeSlot(pageId):
                 self.bufferManager.FreePage(self.headerPageId)
@@ -257,17 +268,17 @@ class Relation:
         Sortie: le RecordId du record
         """
 
-        buffer = self.bufferManager.getPage(pageId)
+        buffer_dataPage = self.bufferManager.getPage(pageId)
         recordId = RecordId(pageId)
         
         # On récupère "position début record disponible" car on ne connait pas quand commence le datapage si il est rempli (si le datapage est vide alors, position est juste 0)
-        buffer.set_position(self.disk.config.pagesize - 4) 
+        buffer_dataPage.set_position(self.disk.config.pagesize - 4) 
         
         # position début Rec M: pagesize - 4 - 4 - 8 * nb_slots
-        positionRecord = buffer.read_int()
-        tailleRecord = self.writeRecordToBuffer(record, buffer, positionRecord)
+        positionRecord = buffer_dataPage.read_int()
+        tailleRecord = self.writeRecordToBuffer(record, buffer_dataPage, positionRecord)
         
-        self.updateDataPage(buffer, positionRecord, tailleRecord, recordId)
+        self.updateDataPage(buffer_dataPage, positionRecord, tailleRecord, recordId)
         self.updateHeaderPage(pageId, tailleRecord)
 
         self.bufferManager.FreePage(pageId)
@@ -389,10 +400,8 @@ class Relation:
         Sortie: le RecordId du record
         """
 
-        print("\n\nnew insert")
-
         freeDataPage = self.getFreeDataPageId(self.getRecordSize(record))
-        
+
         return self.writeRecordToDataPage(record, freeDataPage)
 
 
