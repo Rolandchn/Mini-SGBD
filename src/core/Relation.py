@@ -269,7 +269,6 @@ class Relation:
         tailleRecord = self.writeRecordToBuffer(record, buffer, positionRecord)
         
         self.updateDataPage(buffer, positionRecord, tailleRecord, recordId)
-        self.updateDataPage(buffer, positionRecord, tailleRecord, recordId)
         self.updateHeaderPage(pageId, tailleRecord)
 
         self.bufferManager.FreePage(pageId)
@@ -342,6 +341,7 @@ class Relation:
         index = 0
 
         while index < self.disk.config.nb_slots and (positionRecord := buffer.read_int()) != -1:
+            record = Record([])
             indexRecord = buffer.getPos() - 4
             
             self.readFromBuffer(record, buffer, positionRecord) 
