@@ -67,8 +67,19 @@ if __name__ == "__main__":
     relation1.InsertRecord(r1_2)
     relation1.InsertRecord(r1_3)
     relation1.InsertRecord(r1_1)
+    
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+    relation1.InsertRecord(r1_1)
 
-    for x in relation1.getRecordsInDataPage(PageId(0, 2)):
-        print(x.values)
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+    relation1.InsertRecord(r1_1)
+
+    for record in relation1.getRecordsInDataPage(PageId(0, 3)):
+        print(record.values)
+    
 
     #buffManager.disk.SaveState()
