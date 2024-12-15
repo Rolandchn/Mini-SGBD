@@ -239,7 +239,6 @@ class Relation:
         return dataPageId
 
 
-
     def getFreeDataPageId(self, sizeRecord) -> PageId:
         """ 
         Opération: recherche dans le headerPage le pageId d'un dataPage qui contient assez d'espace et de slot pour stocker un record
@@ -281,6 +280,7 @@ class Relation:
         self.updateDataPage(buffer_dataPage, positionRecord, tailleRecord, recordId)
         self.updateHeaderPage(pageId, tailleRecord)
 
+        buffer_dataPage = True
         self.bufferManager.FreePage(pageId)
         
         return recordId
