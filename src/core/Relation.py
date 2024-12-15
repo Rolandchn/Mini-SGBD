@@ -400,7 +400,6 @@ class Relation:
         Opération: ajoute le record dans une dataPage disponible ou une nouvelle dataPage
         Sortie: le RecordId du record
         """
-
         freeDataPage = self.getFreeDataPageId(self.getRecordSize(record))
 
         return self.writeRecordToDataPage(record, freeDataPage)
@@ -411,28 +410,19 @@ class Relation:
         Opération: compte le nombre slot directory disponible de la dataPage
         Sortie: vrai si il y a assez de slot directory, faux sinon
         """
-        print("\nin has_freeSlot")
         buffer = self.bufferManager.getPage(dataPageId)
 
-        print(buffer)
         buffer.set_position(self.disk.config.pagesize - 16)
 
         for i in range(self.disk.config.nb_slots):
             if buffer.read_int() == -1:
                 self.bufferManager.FreePage(dataPageId)
-                print(buffer)
-
-                print("true, end has_freeSlot\n")
-
 
                 return True
             
             buffer.set_position(buffer.getPos() - 12)
 
         self.bufferManager.FreePage(dataPageId)
-        print(buffer)
-
-        print("false, end has_freeSlot\n")
 
         return False
 
@@ -457,6 +447,7 @@ class Relation:
 
         return total_size
 
+
     def GetAllRecords(self):
         """
         Opération: lis toutes les dataPageId du headerPage, et extrait les toutes records des dataPage
@@ -471,7 +462,6 @@ class Relation:
 
         return liste_record
     
-
     
     def desallocAllPagesOfRelation(self):
         headerPage = self.bufferManager.getPage(self.headerPageId)

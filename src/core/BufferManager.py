@@ -42,6 +42,10 @@ class BufferManager:
         for buffer in self.buffers:
             if pageId == buffer.pageId:
                 buffer.pin_count = 1
+
+                if buffer in self.free_buffers:
+                    self.free_buffers.remove(buffer)
+
                 return buffer
             
             if buffer.pin_count != 0:
@@ -106,7 +110,8 @@ class BufferManager:
                 # valeur initiale 0 car on utilise qu'un seul processus
                 buffer.pin_count = 0
 
-                self.free_buffers.append(buffer)
+                if buffer not in self.free_buffers:
+                    self.free_buffers.append(buffer)
 
                 break
 
@@ -135,3 +140,19 @@ class BufferManager:
                 buffer.dirty_flag = False
             buffer.pin_count = 0
             buffer.pageId = None
+
+    def afficherBufferManager(self):
+        
+        print("\nBufferManager: ")
+        print("==================================")
+        print("buffers:")
+        for buffer in self.buffers:
+            print(buffer)
+
+        print("---------------------------------")
+
+        print("free buffer:")
+        for buffer in self.free_buffers:
+            print(buffer)
+        
+        print("==================================")

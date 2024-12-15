@@ -62,6 +62,11 @@ if __name__ == "__main__":
     ## Record & DataPage
     # Ecriture
 
+
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+
     relation1.InsertRecord(r1_1)
     relation1.InsertRecord(r1_2)
     relation1.InsertRecord(r1_3)
@@ -73,12 +78,18 @@ if __name__ == "__main__":
     relation1.InsertRecord(r1_1)
     relation1.InsertRecord(r1_2)
     relation1.InsertRecord(r1_3)
+
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+
+
+    print(len(relation1.GetAllRecords()))
+
     
-    relation1.InsertRecord(r1_1)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
-
-    for record in relation1.GetAllRecords():
-        print(record.values)
 
     #buffManager.disk.SaveState()
