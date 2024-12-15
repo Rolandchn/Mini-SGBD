@@ -88,6 +88,7 @@ class DiskManager:
         """ 
         Opération: Ecrit le buffer dans un fichier de donnée.
         """
+        
         filename = os.path.join(dbpath, f"F{pageId.fileIdx}.rsdb")
         
         pagebyte = self.config.pagesize * pageId.pageIdx
@@ -107,15 +108,18 @@ class DiskManager:
         """
         Opération: Ajoute le pageId dans la liste de pageId réutilisable
         """
-        for pId in self.free_pageIds:
-            if pId == pageId:
-                raise ValueError(f"la page ({pageId.fileIdx},{pageId.pageIdx}) a déja été desalouée.")
+        try:
+            for pId in self.free_pageIds:
+                if pId == pageId:
+                    raise ValueError(f"la page ({pageId.fileIdx},{pageId.pageIdx}) a déja été desalouée.")
+                
+            # prendre le cas où pageId < PageId(0, 0)?
+            if self.current_pageId < pageId:
+                raise ValueError(f"la page ({pageId.fileIdx}, {pageId.pageIdx}) n'existe pas.")
             
-        # prendre le cas où pageId < PageId(0, 0)?
-        if self.current_pageId < pageId:
-            raise ValueError(f"la page ({pageId.fileIdx}, {pageId.pageIdx}) n'existe pas.")
-        
-        self.free_pageIds.append(pageId)
+            self.free_pageIds.append(pageId)
+        except ValueError as e:
+            print(e)
 
 
     def SaveState(self) -> None:

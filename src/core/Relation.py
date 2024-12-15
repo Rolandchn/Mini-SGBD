@@ -7,7 +7,7 @@ from DiskManager import DiskManager
 from BufferManager import BufferManager
 import os
 from pathlib import Path
-
+from RecordId import RecordId
 #TODO rajouter des Flag dirty pour les pages modifiées
 #TODO liberer tout les buffers
 
@@ -26,15 +26,14 @@ class Relation:
         #Cas ou relation existe pas, allouer une nouvelle page
         if self.headerPageId is None:
             self.headerPageId = self.disk.AllocPage()
+            print(1)
             
         buffer = self.bufferManager.getPage(self.headerPageId)
-        if(buffer.read_char() == "#"): 
-            buffer.set_position(0)
-            buffer.put_int(0)
-            #remplacer write page par un dirty = true
-            bufferManager.disk.WritePage(self.headerPageId, buffer)
-            buffer.set_position(0)
-        self.bufferManager.disk.SaveState()
+        buffer.set_position(0)
+        buffer.put_int(0)
+        self.bufferManager.disk.WritePage(self.headerPageId, buffer)
+        buffer.dirty_flag = True
+        self.bufferManager.FreePage(self.headerPageId)
     def writeRecordToBuffer(self, record: Record, buff: Buffer, pos: int) -> int:
         """ 
         Opération: Itère dans le Record puis écrit dans le buffer, si il y a un varchar on enregistre l'adresse de début et de fin de chaque valeurs dans le offset. 
@@ -107,9 +106,7 @@ class Relation:
         Sortie: Retourne le nombre d'octet traité par la lecture
         """
 
-        # adress_pos = adress of the index in the offset
-        # value_pos = adress of the value 
-        
+
         value_size = 0
         
         has_varchar = self.has_varchar(self.columns)
@@ -210,6 +207,7 @@ class Relation:
         pageSize = self.disk.config.pagesize
         buffer.put_int(pageSize - 8 * (m + 1))
         buffer.dirty_flag = True
+        self.bufferManager.FreePage(self.headerPageId)
         #TODO free page au lieu de flushbuffers
         self.bufferManager.FlushBuffers()        
         #Init data page
@@ -224,26 +222,24 @@ class Relation:
         buffer2.set_position(self.disk.config.pagesize - 8 - 8 * self.disk.config.nb_slots)
         
         buffer2.dirty_flag = True
-        self.bufferManager.FlushBuffers()
-
+        self.bufferManager.FreePage(dataPageId)
         return dataPageId
 
     def getFreeDataPageId(self, sizeRecord):
         """ 
-         
+        
         """
         buffer = self.bufferManager.getPage(self.headerPageId)
-        
+        buffer.set_position(0)
         n = buffer.read_int()
-
-        for i in range(n):
+        for _ in range(n):
             fidx = buffer.read_int()
             pidx = buffer.read_int()
             espaceLibre = buffer.read_int()
             
             if espaceLibre >= sizeRecord:
-                return PageId(buffer.read_int(), buffer.read_int())
-        
+                return PageId(fidx, pidx)
+        self.bufferManager.FreePage(self.headerPageId)
         return None
 
 
@@ -260,11 +256,11 @@ class Relation:
         positionRecord = buffer.read_int()
         tailleRecord = self.writeRecordToBuffer(record, buffer, positionRecord)
         
-        self.updateDataPage(buffer, positionRecord, tailleRecord)
+        slot = self.updateDataPage(buffer, positionRecord, tailleRecord)
         self.updateHeaderPage(pageId, tailleRecord)
 
-        self.bufferManager.FlushBuffers()
-
+        self.bufferManager.FreePage(pageId)
+        return slot
 
     def updateHeaderPage(self, pageId: PageId, tailleRecord: int):
         buffer = self.bufferManager.getPage(self.headerPageId)
@@ -272,7 +268,7 @@ class Relation:
         N = buffer.read_int()
         
         #avancer la position du buffer vers la page souhaitée
-        for i in range(N):
+        for _ in range(N):
             fidx = buffer.read_int()
             pidx = buffer.read_int()
             buffer.set_position(buffer.getPos() + 4)
@@ -287,6 +283,7 @@ class Relation:
         buffer.put_int(t2 - tailleRecord)
         
         buffer.dirty_flag = True
+        self.bufferManager.FreePage(self.headerPageId)
         
 
     def updateDataPage(self, buffer: Buffer, positionRecord: int, tailleRecord: int):
@@ -296,80 +293,111 @@ class Relation:
 
         # maj vert 1
         buffer.set_position(self.disk.config.pagesize - 16)
-
-        while buffer.read_int() != -1:
+        slot_index = 0
+        while buffer.read_int() != -1 and slot_index < self.disk.config.nb_slots:
             buffer.set_position(buffer.getPos() - 12)
-        
+            slot_index += 1
+
         else:
             buffer.set_position(buffer.getPos() - 4)
+        
         
         # maj vert 2 
         buffer.put_int(positionRecord)
         buffer.put_int(tailleRecord)
 
         buffer.dirty_flag = True
+        self.bufferManager.FreePage(buffer.pageId)
+        return slot_index
 
 
     def getRecordsInDataPage(self, pageId: PageId) -> List[Record]:
         """
         Opération: Lis chaque record d'un datapage
-        Sortie: Retourne la liste des records d'une datapage
+        Sortie: la liste de toutes les records d'une datapage
         """
+
         buffer = self.bufferManager.getPage(pageId)
 
         # positionner sur le début de la première ligne verte
         buffer.set_position(self.disk.config.pagesize - 16)
 
         liste = []
-        record = Record()
 
-        while(positionRecord := buffer.read_int()) != -1:
+        index = 0
+        while (index < self.disk.config.nb_slots) and ((positionRecord := buffer.read_int()) != -1):
+            record = Record([])
             indexRecord = buffer.getPos() - 4
-            
+
             self.readFromBuffer(record, buffer, positionRecord) 
-            
-            liste.append(record)       
-            
+            liste.append(record)
+
             buffer.set_position(indexRecord - 8)
 
-        return liste
-    
+            index += 1
 
-    def getDataPages(self):
+        self.bufferManager.FreePage(pageId)
+        return liste
+
+
+    def getDataPages(self) -> List[PageId]:
+        """
+        Opération: lis les dataPageId dans le headerPage
+        Sortie: la liste de toutes dataPageId du headerPage 
+        """
+
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
-        N = buffer.read_int()
 
         liste = []
 
-        for i in range(N):
-            fidx = buffer.read_int()
-            pidx = buffer.read_int()
+        nb_dataPage = buffer.read_int()
 
-            liste.append(PageId(fidx,pidx))
+        for i in range(nb_dataPage):
+            liste.append(PageId(buffer.read_int(), buffer.read_int()))
+
             buffer.set_position(buffer.getPos() + 4)
-            
+        
+        self.bufferManager.FreePage(self.headerPageId)
+        
         return liste
     
-    def InsertRecord(self, record):
-        buffer = self.bufferManager.getPage(self.headerPageId)
-        buffer.set_position(0)
-        N = buffer.read_int()
-
-        liste = []
-
-        for _ in range(N):
-            fidx = buffer.read_int()
-            pidx = buffer.read_int()
-
-        ...
+    def InsertRecord(self, record: Record):
+        size = self.getRecordSize(record)
+        freepage = self.getFreeDataPageId(size)
+        if freepage is not None:
+            slot = self.writeRecordToDataPage(record, freepage)
+        else:
+            freepage = self.addDataPage()
+            slot = self.writeRecordToDataPage(record, freepage)
+        return RecordId(freepage, slot)    
+        
+    def getRecordSize(self, record: Record) -> int:
+        """
+        Opération: Calcule la taille totale d'un record
+        """
+        total_size = 0
+        has_varchar = self.has_varchar(self.columns)
+        if has_varchar:
+            total_size += 4 * (self.nb_column + 1)
+        for column, value in zip(self.columns, record.values):
+            if isinstance(column.type, Column.Int):
+                total_size += 4
+            elif isinstance(column.type, Column.Float):
+                total_size += 4
+            elif isinstance(column.type, Column.Char):
+                total_size += column.type.size
+            elif isinstance(column.type, Column.VarChar):
+                total_size += len(value)
+        return total_size
 
     def GetAllRecords(self):
         liste = self.getDataPages()
         liste2 = []
         for dataPageId in liste:
             liste3 = self.getRecordsInDataPage(dataPageId)
-            liste2.append(liste3)
+            if liste3 is not None:
+                liste2.extend(liste3)
 
         return liste2
     
@@ -383,6 +411,7 @@ class Relation:
             self.disk.DeAllocPage(PageId(fidx, pidx))
             headerPage.set_position(headerPage.getPos() + 4)
         self.disk.DeAllocPage(self.headerPageId)
+        self.bufferManager.FreePage(self.headerPageId)
         
     @classmethod
     def loadRelation(cls, name: str, diskManager, bufferManager, nomBD):
@@ -449,45 +478,3 @@ class Relation:
 # lorsqu'on fini avec getDataPages, on doit freePage()
 # avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
 
-if __name__ == "__main__":
-    
-    bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-    liste = [Column.ColumnInfo("test1", Column.VarChar(5)), Column.ColumnInfo("test2", Column.Int())]
-    bufferManager.disk.LoadState()
-    script_dir = Path(__file__).parent
-    db_file_path = script_dir / "../../storage/database/test1.json"
-    record1 = Record(["azt", 4])
-    #relation = Relation("test6", 2, liste, bufferManager.disk, bufferManager) 
-    record2 = Record([])
-    relation = Relation.loadRelation("test6", bufferManager.disk, bufferManager, "A")
-    relation.addDataPage()
-    relation.addDataPage()
-    '''print(f"Relation loaded: {relation.name}, Columns: {relation.nb_column}, HeaderPageId: {relation.headerPageId}")
-
-    buff = bufferManager.getPage(PageId(0, 0))
-
-    op1 = relation.writeRecordToBuffer(record1, buff, 0)
-
-    buff.set_position(0)
-
-    record2 = Record([])
-
-    op2 = relation.readFromBuffer(record2, buff, 0)
-
-    for x in record2.values:
-        print(x)
-
-    print(op2)
-        
-    relation.addDataPage()
-    relation.addDataPage()
-    relation.addDataPage()
-    relation.addDataPage()
-    relation.addDataPage()
-    relation.addDataPage()'''
-    dp = relation.getFreeDataPageId(0)
-    print(relation.headerPageId)
-    print(dp)
-    bufferManager.disk.SaveState()
-    
-    

@@ -41,7 +41,7 @@ class BufferManager:
         # cas où il y a une page identique
         for buffer in self.buffers:
             if pageId == buffer.pageId:
-                buffer.pin_count += 1
+                buffer.pin_count = 1
                 return buffer
             
             if buffer.pin_count != 0:
@@ -59,7 +59,7 @@ class BufferManager:
             free_buffer.pageId = pageId
 
             self.disk.ReadPage(pageId,free_buffer)
-            free_buffer.pin_count += 1
+            free_buffer.pin_count = 1
 
             return free_buffer
 
@@ -87,12 +87,12 @@ class BufferManager:
         
         if buffer.dirty_flag:
             self.disk.WritePage(buffer.pageId, buffer)
-
+            buffer.dirty_flag = False
         buffer.pageId = pageId
         
         self.disk.ReadPage(pageId,buffer)
 
-        buffer.pin_count += 1
+        buffer.pin_count = 1
 
         return buffer
 
@@ -104,7 +104,7 @@ class BufferManager:
         for buffer in self.buffers:
             if pageId == buffer.pageId:
                 # valeur initiale 0 car on utilise qu'un seul processus
-                buffer.pin_count -= 1
+                buffer.pin_count = 0
 
                 self.free_buffers.append(buffer)
 

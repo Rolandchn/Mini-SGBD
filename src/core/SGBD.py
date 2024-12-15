@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from DBManger import DBManager
 from DiskManager import DiskManager
 from BufferManager import BufferManager
@@ -8,8 +8,13 @@ import Column
 from Relation import Relation
 import os
 from pathlib import Path
-
-
+from Record import Record
+import traceback
+from Condition import Condition
+from ProjectOperator import ProjectOperator
+from RecordPrinter import RecordPrinter
+from SelectOperator import SelectOperator
+from RelationScanner import RelationScanner
 class SGBD:
     def __init__(self, db_config:DBconfig):
         self.db_config = db_config
@@ -32,42 +37,47 @@ class SGBD:
 
     def processCommand(self, command: str):
         # Analyser et traiter la commande
-        parts = command.split()
-        if not parts:
-            return
+        try:
+            parts = command.split()
+            if not parts:
+                return
 
-        cmd = parts[0].upper()
-        if cmd == "CREATE":
-            if parts[1].upper() == "DATABASE":
-                self.processCreateDatabaseCommand(parts[2])
-            elif parts[1].upper() == "TABLE":
-                self.processCreateTableCommand(parts[2:])
-        elif cmd == "SET":
-            if parts[1].upper() == "DATABASE":
-                self.processSetDatabaseCommand(parts[2])
-        elif cmd == "DROP":
-            if parts[1].upper() == "DATABASE":
-                self.processDropDatabaseCommand(parts[2])
-            elif parts[1].upper() == "TABLE":
-                self.processDropTableCommand(parts[2])
-            elif parts[1].upper() == "TABLES":
-                self.processDropTablesCommand()
-            elif parts[1].upper() == "DATABASES":
-                self.processDropDatabasesCommand()
-        elif cmd == "LIST":
-            if parts[1].upper() == "DATABASES":
-                self.processListDatabasesCommand()
-            elif parts[1].upper() == "TABLES":
-                self.processListTablesCommand()
-        elif cmd == "INSERT":        
-            self.processInsertCommand(parts[1:])
-        elif cmd == "BULKINSERT":
-            self.processBulkInsertCommand(parts[1:])
-        elif cmd == "SELECT":
-            self.processSelectCommand(parts[1:])
-        else:
-            print("Unknown command")
-
+            cmd = parts[0].upper()
+            if cmd == "CREATE":
+                if parts[1].upper() == "DATABASE":
+                    self.processCreateDatabaseCommand(parts[2])
+                elif parts[1].upper() == "TABLE":
+                    self.processCreateTableCommand(parts[2:])
+            elif cmd == "SET":
+                if parts[1].upper() == "DATABASE":
+                    self.processSetDatabaseCommand(parts[2])
+            elif cmd == "DROP":
+                if parts[1].upper() == "DATABASE":
+                    self.processDropDatabaseCommand(parts[2])
+                elif parts[1].upper() == "TABLE":
+                    self.processDropTableCommand(parts[2])
+                elif parts[1].upper() == "TABLES":
+                    self.processDropTablesCommand()
+                elif parts[1].upper() == "DATABASES":
+                    self.processDropDatabasesCommand()
+            elif cmd == "LIST":
+                if parts[1].upper() == "DATABASES":
+                    self.processListDatabasesCommand()
+                elif parts[1].upper() == "TABLES":
+                    self.processListTablesCommand()
+            elif cmd == "INSERT":        
+                self.processInsertCommand(command)
+            elif cmd == "BULKINSERT":
+                self.processBulkInsertCommand(parts[1:])
+            elif cmd == "SELECT":
+                self.processSelectCommand(parts[1:])
+            else:
+                print("Unknown command")
+        except IndexError as I:
+            print("Arguments insufficient for command.", I)
+            traceback.print_exc()
+        except Exception as e:
+            traceback.print_exc() 
     def processQuitCommand(self):
         # Sauvegarder l'état avant de quitter
         self.buffer_manager.FlushBuffers()
@@ -80,47 +90,70 @@ class SGBD:
         print(f"Database {db_name} created.")
 
     def processSetDatabaseCommand(self, db_name: str):
-        self.db_manager.setCurrentDatabase(db_name)
-        print(f"Database set to {db_name}.")
+        if self.db_manager.setCurrentDatabase(db_name):
+            print(f"Database set to {db_name}.")
+        else:
+            print(f"Database {db_name} does not exist.")
+
 
     def processCreateTableCommand(self, parts: list[str]):
-        '''if len(parts) < 4:
+        if len(parts) < 2:
             print("Invalid CREATE TABLE command.")
-            return'''
+            return
 
         table_name = parts[0]
         columns = self.parseColumns(parts[1])
-        table = Relation(table_name, len(columns), columns, self.disk_manager, self.buffer_manager)
-        self.db_manager.addTableToCurrentDatabase(table)
-        print(f"Table {table_name} created in the current database.")
+        if columns:
+            table = Relation(table_name, len(columns), columns, self.disk_manager, self.buffer_manager)
+            if self.db_manager.addTableToCurrentDatabase(table):
+                print(f"Table {table_name} created in the current database.")
+            else:
+                print(f"Failed to create table {table_name} in the current database, Check if Database is set.")
+        else:
+            print("Invalid column definitions.")
+
 
     def processDropDatabaseCommand(self, db_name: str):
-        self.db_manager.removeDatabase(db_name)
-        print(f"Database {db_name} dropped.")
+        if self.db_manager.removeDatabase(db_name):
+            print(f"Database {db_name} dropped.")
+        else:
+            print(f"Database {db_name} does not exist.")
 
     def processDropTableCommand(self, table_name: str):
-        self.db_manager.removeTableFromCurrentDatabase(table_name)
-        print(f"Table {table_name} dropped from the current database.")
+        if self.db_manager.removeTableFromCurrentDatabase(table_name):
+            print(f"Table {table_name} dropped from the current database.")
+        else:
+            print(f"Table {table_name} does not exist in the current database.")
 
     def processDropTablesCommand(self):
-        self.db_manager.removeTablesFromCurrentDatabase()
-        print("All tables dropped from the current database.")
+        if self.db_manager.removeTablesFromCurrentDatabase():
+            print("All tables dropped from the current database.")
+        else:
+            print("No tables to drop in the current database.")
 
     def processDropDatabasesCommand(self):
-        self.db_manager.removeDatabases()
-        print("All databases dropped.")
+        if self.db_manager.removeDatabases():
+            print("All databases dropped.")
+        else:
+            print("No databases to drop.")
 
     def processListDatabasesCommand(self):
         databases = self.db_manager.listDatabases()
-        print("Databases:")
-        for db in databases:
-            print(db)
+        if databases:
+            print("Databases:")
+            for db in databases:
+                print(db)
+        else:
+            print("No databases found.")
 
     def processListTablesCommand(self):
         tables = self.db_manager.listTablesInCurrentDatabase()
-        print("Tables in the current database:")
-        for table in tables:
-            print(table)
+        if tables:
+            print("Tables in the current database:")
+            for table in tables:
+                print(table)
+        else:
+            print("No tables found in the current database.")
 
     @staticmethod
     def parseColumns(columns_str: str) -> list[ColumnInfo]:
@@ -141,57 +174,87 @@ class SGBD:
         return columns
     
     
-    @staticmethod
-    def parseValues(columns_str: str) -> list[ColumnInfo]:
-        columns = []
-        column_parts = columns_str[1:-1].split(",")
-        for column_part in column_parts:
-                columns.append(column_part)
-                
-        return columns
-    
-    
-    #TP 7 START GO GO GO 
-    def processInsertCommand(self,reste: list[str]):
-        # Récupérer la table de la base de données courante
-            if reste[0].upper() == "INTO" and reste[2].upper() == "VALUES":
-                table = self.db_manager.getTableFromCurrentDatabase(reste[1])
-                if table is None:
-                    print(f"Table {reste[1]} does not exist.")
-                    return
-                # Vérifier que le nombre de valeurs correspond au nombre de colonnes
-                values = self.parseValues(reste[3])
-                if len(values) != table.nb_column:
-                    print(f"Number of values does not match the number of columns in table {reste[1]}.")
-                    return
-                # Convertir les valeurs en types appropriés
-                typed_values = []
-                for i, value in enumerate(values):
-                    column_type = table.columns[i].type
-                    if column_type == Column.Int():
-                        typed_values.append(int(value))
-                    elif column_type == Column.Float():
-                        typed_values.append(float(value))
-                    elif column_type == Column.Char(column_type.size) and len(value) == column_type.size:
-                        typed_values.append(value)
-                    elif column_type == Column.VarChar(column_type.size) and len(value) <= column_type.size:
-                        typed_values.append(value)
-                    else:
-                        print("Invalid column type.")
-                        return
-                print(typed_values)
-                # Insérer le tuple dans la table
-                table.InsertRecord(typed_values)
-                print(f"Record inserted into table {reste[1]}.")
+    def parseValues(self, values_str: str) -> list:
+        values = []
+        value_parts = values_str.split(",")
+        for value_part in value_parts:
+            value_part = value_part.strip()
+            if value_part.startswith('"') and value_part.endswith('"'):
+                values.append(value_part[1:-1])
+            elif value_part.isdigit():
+                values.append(int(value_part))
+            elif value_part.replace('.', '', 1).isdigit():
+                values.append(float(value_part))
             else:
-                print("Invalid INSERT command.")
+                values.append(value_part)
+        return values
+
+    
+    #TP 7 START GO GO GO
+    def processInsertCommand(self, command: str):
+        parts = command.split()
+        if len(parts) < 5 or parts[1].upper() != "INTO" or parts[3].upper() != "VALUES":
+            print("Invalid INSERT command.")
+            return
+
+        table_name = parts[2]
+        values_str = parts[4][1:-1]
+        typed_values = self.parseValues(values_str)
+
+        if self.db_manager.current_database:
+            table = self.db_manager.getTableFromCurrentDatabase(table_name)
+            if table:
+                record = Record(typed_values)
+                rid = table.InsertRecord(record)
+                if rid is not None:
+                    print(f"Record inserted with RID: {rid}")
+                else:
+                    print("Failed to insert record.")
+            else:
+                print(f"Table {table_name} does not exist.")
+        else:
+            print("No current database set.")
+    def processSelectCommand(self, parts: list[str]):
+        command = " ".join(parts)
+        if len(parts) < 4 or parts[1].upper() != "FROM":
+            print("Invalid SELECT command.")
+            return
+
+        columns = parts[0].split(",")
+        table_name = parts[2]
+        conditions = self.parseConditions(command)
+
+        if self.db_manager.current_database:
+            table = self.db_manager.getTableFromCurrentDatabase(table_name)
+            if table:
+                relation_scanner = RelationScanner(table)
+                select_operator = SelectOperator(relation_scanner, conditions, table)
+                if columns[0] == '*':
+                    columns = [col.name for col in table.columns]
+                project_operator = ProjectOperator(select_operator, columns, table)
+                printer = RecordPrinter(project_operator)
+                printer.print_records()
+            else:
+                print(f"Table {table_name} does not exist.")
+        else:
+            print("No current database set.")
+
+    @staticmethod
+    def parseConditions(command: str) -> List[Condition]:
+        conditions = []
+        if "WHERE" in command:
+            condition_str = command.split("WHERE")[1]
+            condition_parts = condition_str.split("AND")
+            for condition_part in condition_parts:
+                conditions.append(Condition.from_string(condition_part))
+        return conditions
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
     sgbd.run()
-    
+        
 
 #TODO ne devrait pas afficher un log de succès tant que ça a pas marché
 #TODO desalouer les pages des bases et tables supprimées
 #TODO revoir la condition de create table
-
+#TODO revoir la condition de insert (on peut pas insérer des record avec chat de taille 1 (taille de 2) mais on peut inserer plus de 2 char)
 #REMARQUE : on peut pas mettre d'accents dans les records
