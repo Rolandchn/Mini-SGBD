@@ -18,7 +18,6 @@ class DBManager:
     # Création d'une base de données
     def createDatabase(self, name: str) -> bool:
         if name not in self.databases:
-            print("database created")
             self.databases[name] = Database(name)
             return True
         else:

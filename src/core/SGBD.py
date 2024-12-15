@@ -179,16 +179,23 @@ class SGBD:
         value_parts = values_str.split(",")
         for value_part in value_parts:
             value_part = value_part.strip()
-            if value_part.startswith('"') and value_part.endswith('"'):
-                values.append(value_part[1:-1])
-            elif value_part.isdigit():
+            
+            # Remove quotes from the beginning and end of the string
+            # Handle different quote types: ", ', ʺ
+            if (value_part.startswith('"') and value_part.endswith('"')) or \
+            (value_part.startswith("'") and value_part.endswith("'")) or \
+            (value_part.startswith("ʺ") and value_part.endswith("ʺ")):
+                value_part = value_part[1:-1]
+            
+            # Convert to appropriate type
+            if value_part.isdigit():
                 values.append(int(value_part))
             elif value_part.replace('.', '', 1).isdigit():
                 values.append(float(value_part))
             else:
                 values.append(value_part)
+        
         return values
-
     
     #TP 7 START GO GO GO
     def processInsertCommand(self, command: str):
@@ -220,8 +227,14 @@ class SGBD:
             print("Invalid SELECT command.")
             return
 
-        columns = parts[0].split(",")
-        table_name = parts[2]
+        # Extraire les colonnes et le nom de la table
+        columns_part = parts[0]
+        table_part = parts[2]
+        print(table_part)
+
+        table_name = table_part
+        table_alias = parts[3]
+
         conditions = self.parseConditions(command)
 
         if self.db_manager.current_database:
@@ -229,9 +242,17 @@ class SGBD:
             if table:
                 relation_scanner = RelationScanner(table)
                 select_operator = SelectOperator(relation_scanner, conditions, table)
+
+                # Remplacer les alias de colonne par les noms de colonne réels
+                if table_alias:
+                    columns = [f"{table_alias}.{col}" if '.' not in col else col for col in columns_part.split(",")]
+                else:
+                    columns = columns_part.split(",")
+
                 if columns[0] == '*':
-                    columns = [col.name for col in table.columns]
-                project_operator = ProjectOperator(select_operator, columns, table)
+                    columns = [f"{table_alias}.{col.name}" if table_alias else col.name for col in table.columns]
+
+                project_operator = ProjectOperator(select_operator, columns, table, table_alias)
                 printer = RecordPrinter(project_operator)
                 printer.print_records()
             else:
