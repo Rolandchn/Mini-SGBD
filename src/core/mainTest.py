@@ -25,14 +25,15 @@ if __name__ == "__main__":
     buffManager.disk.LoadState()
     ## Relation
     # Relation 1: nom | age | id
-    relation1 = Relation("camarade", 
+    '''relation1 = Relation("camarade", 
                         3, 
                         [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("age", Column.Int()), Column.ColumnInfo("id", Column.Int())],
                         buffManager.disk,
                         buffManager)
-    h = buffManager.getPage(relation1.headerPageId)
-    print(relation1.headerPageId)
-    h.set_position(0)
+    h = buffManager.getPage(relation1.headerPageId)'''
+    relationT = Relation.loadRelation("TAB1", buffManager.disk, buffManager,"DB1")
+    print(relationT.getRecordsInDataPage(PageId(1,0)))
+    '''h.set_position(0)
     nb = h.read_int()
     h.set_position(0)
     print(nb)
@@ -57,19 +58,18 @@ if __name__ == "__main__":
     l1 = relation1.getDataPages()
     print("a",l1)
     print("b",relation1.getFreeDataPageId(1))
-    '''
+    
     r1_1 = Record(["Leo", 21, 123456])
     r1_2 = Record(["Hector", 22, 121212])
     r1_3 = Record(["Marc", 24, 654321])
 
     # Relation 2: nom | prix
-    '''
-    '''relation2 = Relation("fruit", 
+    relation2 = Relation("fruit", 
                         2, 
                         [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("prix", Column.Float())],
                         buffManager.disk,
                         buffManager)
-    
+
     r2_1 = Record(["Pomme", 6.5])
     r2_2 = Record(["Orange", 6])
     r2_3 = Record(["Banane", 5.32])

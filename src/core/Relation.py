@@ -314,44 +314,54 @@ class Relation:
     def getRecordsInDataPage(self, pageId: PageId) -> List[Record]:
         """
         Opération: Lis chaque record d'un datapage
-        Sortie: Retourne la liste des records d'une datapage
+        Sortie: la liste de toutes les records d'une datapage
         """
+
         buffer = self.bufferManager.getPage(pageId)
 
         # positionner sur le début de la première ligne verte
         buffer.set_position(self.disk.config.pagesize - 16)
 
         liste = []
-        record = Record()
 
-        while(positionRecord := buffer.read_int()) != -1:
+        index = 0
+        while (index < self.disk.config.nb_slots) and ((positionRecord := buffer.read_int()) != -1):
+            record = Record([])
             indexRecord = buffer.getPos() - 4
-            
+
             self.readFromBuffer(record, buffer, positionRecord) 
-            
-            liste.append(record)       
-            
+            liste.append(record)
+
             buffer.set_position(indexRecord - 8)
+
+            index += 1
+
         self.bufferManager.FreePage(pageId)
         return liste
-    
 
-    def getDataPages(self):
+
+    def getDataPages(self) -> List[PageId]:
+        """
+        Opération: lis les dataPageId dans le headerPage
+        Sortie: la liste de toutes dataPageId du headerPage 
+        """
+
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
-        N = buffer.read_int()
 
         liste = []
 
-        for i in range(N):
-            fidx = buffer.read_int()
-            pidx = buffer.read_int()
+        nb_dataPage = buffer.read_int()
 
-            liste.append(PageId(fidx,pidx))
+        for i in range(nb_dataPage):
+            liste.append(PageId(buffer.read_int(), buffer.read_int()))
+
             buffer.set_position(buffer.getPos() + 4)
+        
         self.bufferManager.FreePage(self.headerPageId)
+        
         return liste
- 
+    
     def InsertRecord(self, record: Record):
         size = self.getRecordSize(record)
         freepage = self.getFreeDataPageId(size)
@@ -386,7 +396,8 @@ class Relation:
         liste2 = []
         for dataPageId in liste:
             liste3 = self.getRecordsInDataPage(dataPageId)
-            liste2.extend(liste3)
+            if liste3 is not None:
+                liste2.extend(liste3)
 
         return liste2
     
