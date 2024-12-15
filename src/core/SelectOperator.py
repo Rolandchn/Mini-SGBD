@@ -15,9 +15,10 @@ class SelectOperator(IRecordIterator):
             record = self.iterator.GetNextRecord()
             if record is None:
                 return None
-            if all(condition.evaluate(record, self.relation.columns) for condition in self.conditions):
+        
+            condition_results = [condition.evaluate(record, self.relation.columns) for condition in self.conditions]
+            if all(condition_results):
                 return record
-
     def Close(self):
         self.iterator.Close()
 
