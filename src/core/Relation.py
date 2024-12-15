@@ -394,6 +394,7 @@ class Relation:
         
         return liste
     
+    
     def InsertRecord(self, record: Record) -> RecordId:
         """
         Opération: ajoute le record dans une dataPage disponible ou une nouvelle dataPage
