@@ -225,8 +225,8 @@ class Relation:
         buffer_headerPage.dirty_flag = True
         self.bufferManager.FreePage(self.headerPageId)
 
-        #TODO free page au lieu de flushbuffers
-        self.bufferManager.FlushBuffers()      
+        """ #TODO free page au lieu de flushbuffers
+        self.bufferManager.FlushBuffers()       """
 
         #Init data page
         buffer_dataPage = self.bufferManager.getPage(dataPageId)
@@ -251,13 +251,14 @@ class Relation:
         Opération: recherche dans le headerPage le pageId d'un dataPage qui contient assez d'espace et de slot pour stocker un record
         Sortie: la PageId d'une dataPage disponible ou le PageId d'une nouvelle dataPage   
         """
-
         buffer_headerPage = self.bufferManager.getPage(self.headerPageId)
+        print("bufferManager: ",self.bufferManager.buffers)
         buffer_headerPage.set_position(0)
         n = buffer_headerPage.read_int()
-        
         for _ in range(n):
+            print(buffer_headerPage)
             pageId = PageId(buffer_headerPage.read_int(), buffer_headerPage.read_int())
+            print(pageId, buffer_headerPage.getPos())
             
             if sizeRecord <= buffer_headerPage.read_int() and self.has_freeSlot(pageId):
                 self.bufferManager.FreePage(self.headerPageId)
@@ -412,6 +413,8 @@ class Relation:
         Sortie: le RecordId du record
         """
 
+        print("\n\nnew insert")
+
         freeDataPage = self.getFreeDataPageId(self.getRecordSize(record))
         
         return self.writeRecordToDataPage(record, freeDataPage)
@@ -443,19 +446,28 @@ class Relation:
         Opération: compte le nombre slot directory disponible de la dataPage
         Sortie: vrai si il y a assez de slot directory, faux sinon
         """
-        
+        print("\nin has_freeSlot")
         buffer = self.bufferManager.getPage(dataPageId)
 
+        print(buffer)
         buffer.set_position(self.disk.config.pagesize - 16)
 
         for i in range(self.disk.config.nb_slots):
             if buffer.read_int() == -1:
-                self.bufferManager.FreePage(buffer.pageId)
+                self.bufferManager.FreePage(dataPageId)
+                print(buffer)
+
+                print("true, end has_freeSlot\n")
+
+
                 return True
             
             buffer.set_position(buffer.getPos() - 12)
 
-        self.bufferManager.FreePage(buffer.pageId)
+        self.bufferManager.FreePage(dataPageId)
+        print(buffer)
+
+        print("false, end has_freeSlot\n")
 
         return False
 
