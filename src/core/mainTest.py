@@ -12,6 +12,7 @@ import Column
 import os
 from pathlib import Path
 
+from PageDirectoryIterator import PageDirectoryIterator
 
 def afficher_headerPage(relation:Relation):
     buff_headerPage = buffManager.getPage(relation.headerPageId)
@@ -87,9 +88,20 @@ if __name__ == "__main__":
     relation1.InsertRecord(r1_2)
     relation1.InsertRecord(r1_3)
 
+    relation1.addDataPage()
+    relation1.addDataPage()
+    relation1.addDataPage()
+    relation1.addDataPage()
+    relation1.addDataPage()
 
     print(len(relation1.GetAllRecords()))
 
     
+    pdi = PageDirectoryIterator(relation1)
+    print(pdi.GetNextDataPageId())
+    print(pdi.GetNextDataPageId())
+    print(pdi.GetNextDataPageId())
+    print(pdi.GetNextDataPageId())
+    print(pdi.GetNextDataPageId())
 
     #buffManager.disk.SaveState()
