@@ -1,13 +1,13 @@
+import os
+import json
+
 from typing import Optional, List
+
 from Database import Database 
 from Relation import Relation
-import os
-from pathlib import Path
-from DBconfig import DBconfig   
 from BufferManager import BufferManager
-from Column import ColumnInfo
-import Column
-import json
+
+
 class DBManager:
     def __init__(self, db_config):
         self.databases = {}  # Dictionnaire pour stocker les bases de données

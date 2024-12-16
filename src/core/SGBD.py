@@ -1,8 +1,9 @@
-import Column
 import os
 import traceback
 
 from typing import List
+
+import Column
 
 from DiskManager import DiskManager
 from BufferManager import BufferManager
@@ -53,7 +54,7 @@ class SGBD:
                 return
 
             cmd = parts[0]
-            
+
             if cmd == "CREATE":
                 if parts[1] == "DATABASE":
                     self.processCreateDatabaseCommand(parts[2])
