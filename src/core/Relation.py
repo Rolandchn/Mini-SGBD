@@ -86,12 +86,12 @@ class Relation:
         """
         if isinstance(column.type, Column.Int):
             buff.put_int(int(value))
-            return 4
+            return Column.Int.size
 
 
         elif isinstance(column.type, Column.Float):
             buff.put_float(float(value))
-            return 4
+            return Column.Float.size
         
         elif isinstance(column.type, Column.Char):
             for index in range(column.type.size):
