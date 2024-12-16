@@ -2,6 +2,13 @@
 # ignore test file
 test.py
 
+# ignore data
+storage/database/
+!storage/database/role
+
+storage/datafiles/
+!storage/datafiles/role
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
