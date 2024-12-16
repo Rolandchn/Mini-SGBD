@@ -1,5 +1,5 @@
 from typing import Optional, List
-from src.core.DBManager import DBManager
+from DBManager import DBManager
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 from DBconfig import DBconfig
