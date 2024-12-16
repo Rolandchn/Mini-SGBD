@@ -56,9 +56,8 @@ class DBManager:
         if self.current_database:
             return self.databases[self.current_database].getTable(table_name)
         
-        else:
-            print("Aucune base de données active")
-            return None
+        print("Aucune base de données active")
+        return None
 
 
     # Supprimer une table de la BDD courante (Active)
@@ -126,9 +125,8 @@ class DBManager:
             print(f"Database {name} removed from dictionary")
             return True
 
-        else:
-            print(f"La base de données {name} n'existe pas")
-            return False
+        print(f"La base de données {name} n'existe pas")
+        return False
 
 
     def saveState(self):
