@@ -35,9 +35,9 @@ class SGBD:
 
     def run(self) -> None:
         while True:
-            command = input("Enter command: ").upper()
+            command = input("Enter command: ")
 
-            if command == "QUIT":
+            if command.upper() == "QUIT":
                 self.processQuitCommand()
                 break
 
@@ -53,37 +53,38 @@ class SGBD:
             if not parts:
                 return
 
-            cmd = parts[0]
+            cmd = parts[0].upper()
+            arg1 = parts[1].upper()
 
             if cmd == "CREATE":
-                if parts[1] == "DATABASE":
+                if arg1 == "DATABASE":
                     self.processCreateDatabaseCommand(parts[2])
 
-                elif parts[1] == "TABLE":
+                elif arg1 == "TABLE":
                     self.processCreateTableCommand(parts[2:])
 
             elif cmd == "SET":
-                if parts[1] == "DATABASE":
+                if arg1 == "DATABASE":
                     self.processSetDatabaseCommand(parts[2])
 
             elif cmd == "DROP":
-                if parts[1] == "DATABASE":
+                if arg1 == "DATABASE":
                     self.processDropDatabaseCommand(parts[2])
 
-                elif parts[1] == "TABLE":
+                elif arg1 == "TABLE":
                     self.processDropTableCommand(parts[2])
 
-                elif parts[1] == "TABLES":
+                elif arg1 == "TABLES":
                     self.processDropTablesCommand()
 
-                elif parts[1] == "DATABASES":
+                elif arg1 == "DATABASES":
                     self.processDropDatabasesCommand()
 
             elif cmd == "LIST":
-                if parts[1] == "DATABASES":
+                if arg1 == "DATABASES":
                     self.processListDatabasesCommand()
 
-                elif parts[1] == "TABLES":
+                elif arg1 == "TABLES":
                     self.processListTablesCommand()
 
             elif cmd == "INSERT":        
