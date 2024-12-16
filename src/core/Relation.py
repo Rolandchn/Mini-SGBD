@@ -309,10 +309,11 @@ class Relation:
         tailleRecord = self.writeRecordToBuffer(record, buffer_dataPage, positionRecord)
         
         self.updateDataPage(buffer_dataPage, positionRecord, tailleRecord, recordId)
-        self.updateHeaderPage(pageId, tailleRecord)
-
+        
         buffer_dataPage = True
         self.bufferManager.FreePage(pageId)
+
+        self.updateHeaderPage(pageId, tailleRecord)
         
         return recordId
     
@@ -324,22 +325,21 @@ class Relation:
 
         buffer = self.bufferManager.getPage(self.headerPageId)
         buffer.set_position(0)
-        N = buffer.read_int()
+
+        nb_dataPage = buffer.read_int()
         
         #avancer la position du buffer vers la page souhaitée
-        for _ in range(N):
-            fidx = buffer.read_int()
-            pidx = buffer.read_int()
-            buffer.set_position(buffer.getPos() + 4)
-
-            if pageId == PageId(fidx, pidx):
+        for _ in range(nb_dataPage):
+            if pageId == PageId(buffer.read_int(), buffer.read_int()):
                 break
 
+            buffer.set_position(buffer.getPos() + 4)
+
         # décrémenter nb octet libre
+        remaining_dataPageSize = buffer.read_int()
         buffer.set_position(buffer.getPos() - 4)
-        t2 = buffer.read_int()
-        buffer.set_position(buffer.getPos() - 4)
-        buffer.put_int(t2 - tailleRecord)
+
+        buffer.put_int(remaining_dataPageSize - tailleRecord)
         
         buffer.dirty_flag = True
         self.bufferManager.FreePage(self.headerPageId)
@@ -350,11 +350,11 @@ class Relation:
         Opération: maj le début de l'espace disponible et ajoute la position du début record et sa taille
         """
 
-        # maj rouge
+        # maj position début record (rouge)
         buffer.set_position(self.disk.config.pagesize - 4)
         buffer.put_int(positionRecord + tailleRecord)
 
-        # positionnement vert 
+        # positionnement slot directory (vert)
         buffer.set_position(self.disk.config.pagesize - 16)
         slot_index = 0
         
@@ -370,9 +370,6 @@ class Relation:
         # maj vert 
         buffer.put_int(positionRecord)
         buffer.put_int(tailleRecord)
-
-        buffer.dirty_flag = True
-        self.bufferManager.FreePage(buffer.pageId)
 
 
     def getRecordsInDataPage(self, pageId: PageId) -> list[Record]:
