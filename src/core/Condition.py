@@ -1,11 +1,12 @@
-from typing import Any, List
+from typing import Any, List, Optional
 import Column
 
 class Condition:
-    def __init__(self, left_term: Any, operator: str, right_term: Any):
+    def __init__(self, left_term: Any, operator: str, right_term: Any, table_alias: Optional[str] = None):
         self.left_term = left_term
         self.operator = operator
         self.right_term = right_term
+        self.table_alias = table_alias
 
     @staticmethod
     def from_string(condition_str: str) -> 'Condition':
@@ -27,50 +28,51 @@ class Condition:
 
     def evaluate(self, record: 'Record', columns: List[Column.ColumnInfo]) -> bool:
         try:
-            left_value = self.get_value(self.left_term, record, columns)
-            right_value = self.get_value(self.right_term, record, columns)
+            left_value = self.get_value(self.left_term, record, columns, self.table_alias)
+            right_value = self.get_value(self.right_term, record, columns, self.table_alias)
 
-            if type(left_value) != type(right_value):
-                try:
-                    if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
-                        left_value = float(left_value)
-                        right_value = float(right_value)
-                    elif isinstance(left_value, str) or isinstance(right_value, str):
-                        left_value = str(left_value)
-                        right_value = str(right_value)
-                except (ValueError, TypeError):
-                    return False
+            print(f"Condition: {self.left_term} {self.operator} {self.right_term}")
+            print(f"Left value: {left_value} (type: {type(left_value)})")
+            print(f"Right value: {right_value} (type: {type(right_value)})")
 
-            if isinstance(left_value, str):
+            if self.operator == '=':
+                if isinstance(left_value, str) and isinstance(right_value, str):
+                    return left_value.strip('"\'') == right_value.strip('"\'')
+                return left_value == right_value
+            
+            if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
+                return self.compare_numbers(float(left_value), float(right_value))
+            
+            if isinstance(left_value, str) and isinstance(right_value, str):
                 return self.compare_strings(left_value, right_value)
-            elif isinstance(left_value, (int, float)):
-                return self.compare_numbers(left_value, right_value)
-            else:
-                if self.operator == '<>':
-                    return left_value != right_value
-                elif self.operator == '=':
-                    return left_value == right_value
-                else:
-                    raise ValueError(f"Unsupported operator {self.operator} for type {type(left_value)}")
+            
+            if self.operator == '<>':
+                return left_value != right_value
+            
+            return False
 
         except Exception as e:
-            print(f"Error in condition evaluation: {e}")
+            print(f"Condition evaluation error: {e}")
             return False
-    
-    def get_value(self, term: Any, record: 'Record', columns: List[Column.ColumnInfo]) -> Any:
-
+    def get_value(self, term: Any, record: 'Record', columns: List[Column.ColumnInfo], table_alias: Optional[str] = None) -> Any:
         if isinstance(term, str):
-            col_index = next((i for i, col in enumerate(columns) if col.name == term), None)
-            if col_index is not None:
-                value = record.values[col_index]
-                return value
-            
             if '.' in term:
-                alias, col_name = term.split('.')
-                col_index = next((i for i, col in enumerate(columns) if col.name == col_name), None)
+                # Split the term into alias and column name
+                parts = term.split('.')
+                
+                if table_alias and parts[0] != table_alias:
+                    raise ValueError(f"Table alias mismatch. Expected {table_alias}, got {parts[0]}")
+                
+                # Find the column by name
+                col_index = next((i for i, col in enumerate(columns) if col.name == parts[1]), None)
                 if col_index is not None:
                     return record.values[col_index]
-                
+            
+            # If no dot or alias matching failed, try to find the column by name
+            col_index = next((i for i, col in enumerate(columns) if col.name == term), None)
+            if col_index is not None:
+                return record.values[col_index]
+            
             try:
                 return int(term) if term.isdigit() else float(term)
             except ValueError:
@@ -78,6 +80,10 @@ class Condition:
 
         return term
     def compare_strings(self, left: str, right: str) -> bool:
+        # Remove quotes from the strings
+        left = left.strip('"\'')
+        right = right.strip('"\'')
+
         if self.operator == '=':
             return left == right
         elif self.operator == '<':
@@ -92,7 +98,6 @@ class Condition:
             return left != right
         else:
             raise ValueError(f"Invalid operator: {self.operator}")
-
     def compare_numbers(self, left: Any, right: Any) -> bool:
         if self.operator == '=':
             return left == right
