@@ -292,15 +292,15 @@ class Relation:
         return (pageId, remaining_dataPageSize)
 
 
-    def writeRecordToDataPage(self, record: Record, pageId:PageId) -> RecordId:
+    def writeRecordToDataPage(self, record: Record, dataPageId:PageId) -> RecordId:
         """
         Opération: Ecrit le record sur un buffer et met à jour les informations du data page et du header page
         Sortie: le RecordId du record
         """
 
-        buffer_dataPage = self.bufferManager.getPage(pageId)
-        recordId = RecordId(pageId)
-        
+        buffer_dataPage = self.bufferManager.getPage(dataPageId)
+        recordId = RecordId(dataPageId)
+
         # On récupère "position début record disponible" car on ne connait pas quand commence le datapage si il est rempli (si le datapage est vide alors, position est juste 0)
         buffer_dataPage.set_position(self.disk.config.pagesize - 4) 
         
@@ -310,10 +310,10 @@ class Relation:
         
         self.updateDataPage(buffer_dataPage, positionRecord, tailleRecord, recordId)
         
-        buffer_dataPage = True
-        self.bufferManager.FreePage(pageId)
+        buffer_dataPage.dirty_flag = True
+        self.bufferManager.FreePage(dataPageId)
 
-        self.updateHeaderPage(pageId, tailleRecord)
+        self.updateHeaderPage(dataPageId, tailleRecord)
         
         return recordId
     

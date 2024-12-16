@@ -54,11 +54,11 @@ class BufferManager:
             else:
                 has_pin_count0 = True
             
-            # stock la 1er page libre
+            # stock la 1er page libre (cas où il y a des buffers vide, tout début du programme)
             if buffer.pageId is None and free_buffer is None:
                 free_buffer = buffer
             
-        # cas où il y avait une page libre
+        # cas où il y avait une page libre (cas où il y a des buffers vide, tout début du programme)
         if free_buffer is not None:
             free_buffer.pageId = pageId
 
@@ -67,7 +67,7 @@ class BufferManager:
 
             return free_buffer
 
-        # cas où toutes les buffers sont occupées
+        # cas où il y a des buffers innocupés
         if has_pin_count0:
             return self.getPageByPolicy(pageId)
         
@@ -92,9 +92,10 @@ class BufferManager:
         if buffer.dirty_flag:
             self.disk.WritePage(buffer.pageId, buffer)
             buffer.dirty_flag = False
+
         buffer.pageId = pageId
         
-        self.disk.ReadPage(pageId,buffer)
+        self.disk.ReadPage(pageId, buffer)
 
         buffer.pin_count = 1
 
