@@ -111,7 +111,6 @@ class Relation:
         Sortie: Retourne le nombre d'octet traité par la lecture
         """
 
-
         value_size = 0
         
         has_varchar = self.has_varchar(self.columns)
@@ -465,22 +464,27 @@ class Relation:
     
     
     def desallocAllPagesOfRelation(self):
-        headerPage = self.bufferManager.getPage(self.headerPageId)
-        headerPage.set_position(0)
-        nb = headerPage.read_int()
-        for _ in range(nb):
-            fidx = headerPage.read_int()
-            pidx = headerPage.read_int()
-            self.disk.DeAllocPage(PageId(fidx, pidx))
-            headerPage.set_position(headerPage.getPos() + 4)
+        buffer_headerPage = self.bufferManager.getPage(self.headerPageId)
+        buffer_headerPage.set_position(0)
+
+        nb_dataPage = buffer_headerPage.read_int()
+        
+        for _ in range(nb_dataPage):
+            pageId = PageId(buffer_headerPage.read_int(), buffer_headerPage.read_int())
+
+            self.disk.DeAllocPage(pageId)
+        
+            buffer_headerPage.set_position(buffer_headerPage.getPos() + 4)
+        
         self.disk.DeAllocPage(self.headerPageId)
+
         self.bufferManager.FreePage(self.headerPageId)
         
+
     @classmethod
     def loadRelation(cls, name: str, diskManager, bufferManager, nomBD):
         from pathlib import Path
         import json
-
 
         full_path = Path(__file__).parent / ".." / ".." / "storage" / "database" / f"{nomBD}.json"
         full_path = full_path.resolve()
