@@ -289,6 +289,62 @@ class SGBD:
         else:
             print("No current database set.")
 
+    def processBulkInsertCommand(self, parts: list[str]):
+        print("now i am inside processBulkInsertCommand methode")
+        if parts[0].upper() != "INTO":
+            print("Invalid command.")
+            return
+
+        table_name = parts[1]
+        file_name = parts[2]
+        print("i am before self.db_manager.getTableFromCurrentDatabase(table_name) , i am not sure that line is working ")
+        # Récupérer la table de la base de données courante
+        table = self.db_manager.getTableFromCurrentDatabase(table_name)
+        print("if this message is printed it means that self.db_manager.getTableFromCurrentDatabase(table_name) works :') yay!!")
+        if table is None:
+            print(f"Table {table_name} does not exist.")
+            return
+
+        # Lire le fichier CSV
+        try:
+            with open(file_name, 'r') as file:
+                lines = file.readlines()
+        except FileNotFoundError:
+            print(f"File {file_name} not found.")
+            return
+
+        # Vérifier que chaque ligne du fichier CSV est valide
+        for line in lines:
+            values = line.strip().split(',')
+            if len(values) != table.nb_column:
+                print(f"Invalid CSV line: {line.strip()}. Number of values does not match the number of columns in table {table_name}.")
+                continue
+
+            # Convertir les valeurs en types appropriés
+            typed_values = []
+            for i, value in enumerate(values):
+                column_type = table.columns[i].type
+                if column_type == Column.Int():
+                    try:
+                        typed_values.append(int(value))
+                    except ValueError:
+                        print(f"Invalid integer value: {value} in line: {line.strip()}")
+                        continue
+                elif column_type == Column.Float():
+                    try:
+                        typed_values.append(float(value))
+                    except ValueError:
+                        print(f"Invalid float value: {value} in line: {line.strip()}")
+                        continue
+                elif column_type == Column.Char(column_type.size) and len(value) == column_type.size:
+                    typed_values.append(value)
+                elif column_type == Column.VarChar(column_type.size) and len(value) <= column_type.size:
+                    typed_values.append(value)
+
+            # Insérer le tuple dans la table
+            table.insertRecord(typed_values)
+
+        print(f"All records from {file_name} inserted into table {table_name}.")
 
     def processSelectCommand(self, parts: list[str]) -> None:
         command = " ".join(parts)
