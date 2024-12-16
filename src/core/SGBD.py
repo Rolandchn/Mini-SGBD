@@ -34,9 +34,9 @@ class SGBD:
 
     def run(self) -> None:
         while True:
-            command = input("Enter command: ")
+            command = input("Enter command: ").upper()
 
-            if command.upper() == "QUIT":
+            if command == "QUIT":
                 self.processQuitCommand()
                 break
 
@@ -52,36 +52,37 @@ class SGBD:
             if not parts:
                 return
 
-            cmd = parts[0].upper()
+            cmd = parts[0]
+            
             if cmd == "CREATE":
-                if parts[1].upper() == "DATABASE":
+                if parts[1] == "DATABASE":
                     self.processCreateDatabaseCommand(parts[2])
 
-                elif parts[1].upper() == "TABLE":
+                elif parts[1] == "TABLE":
                     self.processCreateTableCommand(parts[2:])
 
             elif cmd == "SET":
-                if parts[1].upper() == "DATABASE":
+                if parts[1] == "DATABASE":
                     self.processSetDatabaseCommand(parts[2])
 
             elif cmd == "DROP":
-                if parts[1].upper() == "DATABASE":
+                if parts[1] == "DATABASE":
                     self.processDropDatabaseCommand(parts[2])
 
-                elif parts[1].upper() == "TABLE":
+                elif parts[1] == "TABLE":
                     self.processDropTableCommand(parts[2])
 
-                elif parts[1].upper() == "TABLES":
+                elif parts[1] == "TABLES":
                     self.processDropTablesCommand()
 
-                elif parts[1].upper() == "DATABASES":
+                elif parts[1] == "DATABASES":
                     self.processDropDatabasesCommand()
 
             elif cmd == "LIST":
-                if parts[1].upper() == "DATABASES":
+                if parts[1] == "DATABASES":
                     self.processListDatabasesCommand()
 
-                elif parts[1].upper() == "TABLES":
+                elif parts[1] == "TABLES":
                     self.processListTablesCommand()
 
             elif cmd == "INSERT":        
