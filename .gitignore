@@ -3,14 +3,16 @@
 test.py
 
 # ignore test save
-storage/database/
-!storage/database/role
+storage/
 
-storage/datafiles/
+!storage/database/role
 !storage/datafiles/role
 
+
 # ignore config test buffer save
-src/config/dm.save.json
+src/config
+
+!src/config/DBconfig.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
