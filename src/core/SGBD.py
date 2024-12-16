@@ -43,6 +43,7 @@ class SGBD:
             else:
                 self.processCommand(command)
 
+
     def processCommand(self, command: str) -> None:
         # Analyser et traiter la commande
         try:
@@ -344,7 +345,7 @@ class SGBD:
        
         return conditions
     
-    
+
 if __name__ == "__main__":
     sgbd = SGBD(DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")))
     sgbd.run()
