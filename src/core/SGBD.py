@@ -1,5 +1,5 @@
 from typing import Optional, List
-from src.core.DBManager import DBManager
+from DBManager import DBManager
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 from DBconfig import DBconfig
@@ -248,8 +248,8 @@ class SGBD:
                     columns = [f"{table_alias}.{col}" if '.' not in col else col for col in columns_part.split(",")]
                 else:
                     columns = columns_part.split(",")
-
-                if columns[0] == '*':
+                
+                if columns[0] == '*' or columns[0] == table_alias+'.*':
                     columns = [f"{table_alias}.{col.name}" if table_alias else col.name for col in table.columns]
 
                 project_operator = ProjectOperator(select_operator, columns, table, table_alias)
