@@ -1,15 +1,16 @@
 from typing import List
+
 import Column
+
+from DiskManager import DiskManager
+from BufferManager import BufferManager
+
 from PageId import PageId
 from Buffer import Buffer
 from Record import Record
-from DiskManager import DiskManager
-from BufferManager import BufferManager
-import os
-from pathlib import Path
 from RecordId import RecordId
-#TODO rajouter des Flag dirty pour les pages modifiées
-#TODO liberer tout les buffers
+
+# lorsqu'on fini avec getDataPages, on doit freePage()
 
 class Relation:
     def __init__(self, name: str, nb_column: int, columns: List[Column.ColumnInfo],
@@ -537,6 +538,4 @@ class Relation:
         except json.JSONDecodeError:
             raise ValueError("fichier JSON non conforme")
 
-# lorsqu'on fini avec getDataPages, on doit freePage()
-# avant de freePage, on doit save; c'est à dire WritePage() la page qu'on veut free
 
