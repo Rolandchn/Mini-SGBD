@@ -24,7 +24,9 @@ def afficher_headerPage(relation:Relation):
     
     for _ in range(nb):
         print(f"pageId : {buff_headerPage.read_int()}, {buff_headerPage.read_int()}", ) 
-        print(f"espace : {buff_headerPage.read_int()}")    
+        print(f"espace : {buff_headerPage.read_int()}")  
+
+    buffManager.FreePage(relation.headerPageId)
 
 
 if __name__ == "__main__":
@@ -34,7 +36,6 @@ if __name__ == "__main__":
 
     ## Init
     buffManager = BufferManager.setup(DB_path)
-    buffManager.disk.LoadState()
 
     ## Relation
     # Relation 1: nom | age | id
@@ -47,6 +48,14 @@ if __name__ == "__main__":
     r1_1 = Record(["Leo", 21, 123456])
     r1_2 = Record(["Hector", 22, 121212])
     r1_3 = Record(["Marc", 24, 654321])
+    
+    r1_4 = Record(["Eris", 21, 123456])
+    r1_5 = Record(["Rudeus", 22, 121212])
+    r1_6 = Record(["Roxy", 23, 654321])
+    
+    r1_7 = Record(["Sylphy", 22, 123456])
+    r1_8 = Record(["Aisha", 20, 121212])
+    r1_9 = Record(["Norn", 20, 654321])
 
     # Relation 2: nom | prix
     relation2 = Relation("fruit", 
@@ -61,35 +70,26 @@ if __name__ == "__main__":
 
     ## Record & DataPage
     # Ecriture
+    relation1.InsertRecord(r1_1)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+    relation1.InsertRecord(r1_4)
 
+    relation1.InsertRecord(r1_5)
+    relation1.InsertRecord(r1_6)
+    relation1.InsertRecord(r1_7)
+    relation1.InsertRecord(r1_8)
+
+    relation1.InsertRecord(r1_9)
+    relation1.InsertRecord(r1_2)
+    relation1.InsertRecord(r1_3)
+    relation1.InsertRecord(r1_4)
 
     relation1.InsertRecord(r1_1)
     relation1.InsertRecord(r1_2)
     relation1.InsertRecord(r1_3)
-
-    relation1.InsertRecord(r1_1)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
-
-    relation1.InsertRecord(r1_1)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
-
-    relation1.InsertRecord(r1_1)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
-
-    relation1.InsertRecord(r1_1)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
-
-    relation1.InsertRecord(r1_1)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
-
+    relation1.InsertRecord(r1_4)
 
     print(len(relation1.GetAllRecords()))
-
-    
 
     #buffManager.disk.SaveState()
