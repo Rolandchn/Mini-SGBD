@@ -238,18 +238,19 @@ class SGBD:
         conditions = self.parseConditions(command)
 
         if self.db_manager.current_database:
-            table = self.db_manager.getTableFromCurrentDatabase(table_name)
-            if table:
+            if table := self.db_manager.getTableFromCurrentDatabase(table_name):
                 relation_scanner = RelationScanner(table)
-                select_operator = SelectOperator(relation_scanner, conditions, table)
-
+                select_operator = SelectOperator(relation_scanner, 
+                                                                [Condition(c.left_term, c.operator, c.right_term, table_alias) 
+                                                                for c in conditions], 
+                                                                table)
                 # Remplacer les alias de colonne par les noms de colonne réels
                 if table_alias:
                     columns = [f"{table_alias}.{col}" if '.' not in col else col for col in columns_part.split(",")]
                 else:
                     columns = columns_part.split(",")
 
-                if columns[0] == '*':
+                if columns[0] == '*' or columns[0] == table_alias+'.*':
                     columns = [f"{table_alias}.{col.name}" if table_alias else col.name for col in table.columns]
 
                 project_operator = ProjectOperator(select_operator, columns, table, table_alias)
