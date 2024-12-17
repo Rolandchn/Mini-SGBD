@@ -141,32 +141,73 @@ class Relation:
     @staticmethod
     def read_value_from_buffer(value_info: Column.ColumnInfo, value_size: int, buff: Buffer)  -> int | float | str:
         """ 
-        Opération: Lis une valeur du buffer
+        Opération: Lis une valeur du buffer avec gestion des erreurs
         """
 
         if isinstance(value_info.type, Column.Int):
             return buff.read_int()
         
         elif isinstance(value_info.type, Column.Float):
-            return buff.read_float()
+            # Add more debugging for float reading
+            try:
+                current_pos = buff.getPos()
+                byte_list = buff.getByte()
+                print(f"Float reading - Current position: {current_pos}")
+                
+                return buff.read_float()
+            except Exception as e:
+                print(f"Error reading float: {e}")
+                print(f"Buffer contents: {buff.getByte()}")
+                print(f"Current position: {buff.getPos()}")
+                return 0.0  # Default value
         
         elif isinstance(value_info.type, Column.Char):
             value = ""
-
             for i in range(value_info.type.size):
-                value += buff.read_char()
+                try:
+                    # Safety check to prevent index out of range
+                    current_pos = buff.getPos()
+                    byte_list = buff.getByte()
+                    
+                    print(f"Char reading - Current position: {current_pos}")
+                    print(f"Byte at position: {byte_list[current_pos] if current_pos < len(byte_list) else 'Out of range'}")
+                    
+                    if current_pos < len(byte_list) and byte_list[current_pos] is not None:
+                        char = bytes([byte_list[current_pos]]).decode('utf-8', errors='replace')
+                        value += char
+                        buff.set_position(current_pos + 1)
+                    else:
+                        print(f"Breaking char read at index {i}")
+                        break
+                except Exception as e:
+                    print(f"Error reading char: {e}")
+                    break
 
             return value
         
         # cas VarChar
         value = ""
-
         for i in range(value_size):
-            value += buff.read_char()
+            try:
+                current_pos = buff.getPos()
+                byte_list = buff.getByte()
+                
+                print(f"VarChar reading - Current position: {current_pos}")
+                print(f"Byte at position: {byte_list[current_pos] if current_pos < len(byte_list) else 'Out of range'}")
+                
+                if current_pos < len(byte_list) and byte_list[current_pos] is not None:
+                    char = bytes([byte_list[current_pos]]).decode('utf-8', errors='replace')
+                    value += char
+                    buff.set_position(current_pos + 1)
+                else:
+                    print(f"Breaking varchar read at index {i}")
+                    break
+            except Exception as e:
+                print(f"Error reading varchar: {e}")
+                break
 
         return value
-
-
+    
     @staticmethod
     def read_offset_from_buffer(adress_pos, buff: Buffer):
         """ 
@@ -477,8 +518,7 @@ class Relation:
                 total_size += len(value)
 
             else:
-                total_size += column.type.size
-
+                total_size += column.type.size            
         return total_size
 
 

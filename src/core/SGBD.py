@@ -348,7 +348,7 @@ class SGBD:
 
     def processSelectCommand(self, parts: list[str]) -> None:
         command = " ".join(parts)
-
+        
         if len(parts) < 4 or parts[1].upper() != "FROM":
             print("Invalid SELECT command.")
             return

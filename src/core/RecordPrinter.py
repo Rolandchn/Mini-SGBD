@@ -14,7 +14,7 @@ class RecordPrinter:
             filtered_records.append(record)
 
         for record in filtered_records:
-            print("; ".join(str(value) for value in record.values) + ".")
+            print(" ; ".join(str(value) for value in record.values))
         print(f"Total records={len(filtered_records)}")
 
         self.iterator.Close()

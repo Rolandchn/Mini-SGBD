@@ -15,14 +15,11 @@ class PageDirectoryIterator:
         if current_page_id == self.relation.headerPageId:
             buffer.set_position(0)
             nb = buffer.read_int()
-            print("nb cas1 :", nb)
             if nb == 0:
                 return None
             fidx = buffer.read_int()
             pidx = buffer.read_int()
             buffer.set_position(buffer.getPos() + 4)
-            print("fidx 1:", fidx)
-            print("pidx 1:", pidx)
             return PageId(fidx, pidx)
         else:
             buffer.set_position(0)

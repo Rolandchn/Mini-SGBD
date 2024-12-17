@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 from PageDirectoryIterator import PageDirectoryIterator
-
+from PageOrientedJoinOperator import PageOrientedJoinOperator
 def afficher_headerPage(relation:Relation):
     buff_headerPage = buffManager.getPage(relation.headerPageId)
     print(buff_headerPage.getByte())
@@ -68,6 +68,9 @@ if __name__ == "__main__":
     r2_1 = Record(["Pomme", 6.5])
     r2_2 = Record(["Orange", 6])
     r2_3 = Record(["Banane", 5.32])
+    r2_4 = Record(["Kiwi", 2.99])
+    r2_5 = Record(["Raisin", 4.99])
+    r2_6 = Record(["Ananas", 2.32])
 
     ## Record & DataPage
     # Ecriture
@@ -79,18 +82,21 @@ if __name__ == "__main__":
     relation1.InsertRecord(r1_5)
     relation1.InsertRecord(r1_6)
     relation1.InsertRecord(r1_7)
-    relation1.InsertRecord(r1_8)
 
-    relation1.InsertRecord(r1_9)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
-    relation1.InsertRecord(r1_4)
-
-    relation1.InsertRecord(r1_1)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
-    relation1.InsertRecord(r1_4)
-
-    print(len(relation1.GetAllRecords()))
-
+    relation2.InsertRecord(r2_1)
+    relation2.InsertRecord(r2_2)
+    relation2.InsertRecord(r2_3)
+    relation2.InsertRecord(r2_4)
+    relation2.InsertRecord(r2_5)
+    relation2.InsertRecord(r2_6)
+    print("Before join")
+    a = relation1.GetAllRecords()
+    b = relation2.GetAllRecords()
+    for i in a:
+        print(i.values)
+    for i in b:
+        print(i.values)
+    print("After join")
+    join = PageOrientedJoinOperator(relation1,relation2,[],buffManager)
+    print(join.perform_join())
     #buffManager.disk.SaveState()

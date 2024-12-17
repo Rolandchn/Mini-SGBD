@@ -8,16 +8,44 @@ class Condition:
         self.right_term = right_term
         self.table_alias = table_alias
 
-    @staticmethod
-    def from_string(condition_str: str) -> 'Condition':
-        for op in ['<=', '>=', '<>', '=', '<', '>']:
-            if op in condition_str:
-                parts = condition_str.split(op)
-                left_term = parts[0].strip()
-                right_term = parts[1].strip()
-                return Condition(left_term, op, right_term)
+    @classmethod
+    def from_string(cls, condition_str: str, table_alias1=None, table_alias2=None):
+        """
         
-        raise ValueError(f"No valid operator found in condition: {condition_str}")
+        """
+        # Remove extra whitespaces
+        condition_str = condition_str.strip()
+        
+        # Supported comparison operators
+        operators = ['>', '<', '>=', '<=', '=', '!=']
+        
+        # Find the operator
+        operator = None
+        for op in operators:
+            if op in condition_str:
+                operator = op
+                break
+        
+        if not operator:
+            raise ValueError(f"No valid comparison operator found in condition: {condition_str}")
+        
+        # Split the condition into left and right terms
+        left_term, right_term = condition_str.split(operator)
+        left_term = left_term.strip()
+        right_term = right_term.strip()
+        
+        # Handle table aliases if provided
+        if table_alias1:
+            # If left term doesn't have an alias, add the first table's alias
+            if '.' not in left_term:
+                left_term = f"{table_alias1}.{left_term}"
+        
+        if table_alias2:
+            # If right term doesn't have an alias, add the second table's alias
+            if '.' not in right_term:
+                right_term = f"{table_alias2}.{right_term}"
+        
+        return cls(left_term, operator, right_term)
 
     @staticmethod
     def get_operator(condition_str: str) -> str:
@@ -26,34 +54,76 @@ class Condition:
                 return op
         raise ValueError(f"Invalid operator in condition: {condition_str}")
 
-    def evaluate(self, record: 'Record', columns: List[Column.ColumnInfo]) -> bool:
-        try:
-            left_value = self.get_value(self.left_term, record, columns, self.table_alias)
-            right_value = self.get_value(self.right_term, record, columns, self.table_alias)
 
-            print(f"Condition: {self.left_term} {self.operator} {self.right_term}")
-            print(f"Left value: {left_value} (type: {type(left_value)})")
-            print(f"Right value: {right_value} (type: {type(right_value)})")
+    def evaluate(self, record, columns, table_aliases=None):
+        """
+        Evaluate the condition against a record
+        
+        Args:
+        record (list): Record to evaluate
+        columns (list): Column definitions for the record
+        table_aliases (dict, optional): Mapping of table aliases to their actual column lists
+        
+        Returns:
+        bool: True if condition is satisfied, False otherwise
+        """
+        # Helper function to resolve column value
+        def resolve_column_value(term):
+            # Handle table-qualified column names
+            term_parts = term.split('.')
+            
+            if len(term_parts) > 1:
+                # Term with table alias
+                alias, column_name = term_parts
+                
+                # Find the index of the column in the combined columns
+                col_index = next(
+                    (i for i, col in enumerate(columns) 
+                    if col.name == f"{alias}.{column_name}" or 
+                        col.name == column_name), 
+                    None
+                )
+                
+                if col_index is not None:
+                    return record[col_index]
+            
+            # If no alias or not found, try direct column name
+            col_index = next(
+                (i for i, col in enumerate(columns) 
+                if col.name.split('.')[-1] == term), 
+                None
+            )
+            
+            if col_index is not None:
+                return record[col_index]
+            
+            # If it's a constant value (number or string)
+            try:
+                return float(term)
+            except ValueError:
+                # Remove quotes if it's a string
+                return term.strip("'\"")
+        
+        # Resolve left and right term values
+        left_value = resolve_column_value(self.left_term)
+        right_value = resolve_column_value(self.right_term)
+        
+        # Perform comparison based on operator
+        if self.operator == '=':
+            return left_value == right_value
+        elif self.operator == '>':
+            return left_value > right_value
+        elif self.operator == '<':
+            return left_value < right_value
+        elif self.operator == '>=':
+            return left_value >= right_value
+        elif self.operator == '<=':
+            return left_value <= right_value
+        elif self.operator == '!=':
+            return left_value != right_value
+        
+        return False
 
-            if self.operator == '=':
-                if isinstance(left_value, str) and isinstance(right_value, str):
-                    return left_value.strip('"\'') == right_value.strip('"\'')
-                return left_value == right_value
-            
-            if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
-                return self.compare_numbers(float(left_value), float(right_value))
-            
-            if isinstance(left_value, str) and isinstance(right_value, str):
-                return self.compare_strings(left_value, right_value)
-            
-            if self.operator == '<>':
-                return left_value != right_value
-            
-            return False
-
-        except Exception as e:
-            print(f"Condition evaluation error: {e}")
-            return False
     def get_value(self, term: Any, record: 'Record', columns: List[Column.ColumnInfo], table_alias: Optional[str] = None) -> Any:
         if isinstance(term, str):
             if '.' in term:
