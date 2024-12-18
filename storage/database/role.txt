@@ -1,1 +1,1 @@
-stock les json de metadata des bdd
+Ce fichier sert juste a ce que ce dossier soit détécté par github

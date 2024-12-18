@@ -31,15 +31,11 @@ class Condition:
             left_value = self.get_value(self.left_term, record, columns, self.table_alias)
             right_value = self.get_value(self.right_term, record, columns, self.table_alias)
 
-            print(f"Condition: {self.left_term} {self.operator} {self.right_term}")
-            print(f"Left value: {left_value} (type: {type(left_value)})")
-            print(f"Right value: {right_value} (type: {type(right_value)})")
-
             if self.operator == '=':
                 if isinstance(left_value, str) and isinstance(right_value, str):
                     return left_value.strip('"\'') == right_value.strip('"\'')
                 return left_value == right_value
-            
+
             if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
                 return self.compare_numbers(float(left_value), float(right_value))
             
