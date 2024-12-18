@@ -27,7 +27,7 @@ class SGBD:
         self.disk_manager = DiskManager(db_config)
         self.buffer_manager = BufferManager(db_config, self.disk_manager)
         self.db_manager = DBManager(db_config)
-
+        
         # Charger l'état des composants
         self.disk_manager.LoadState()
         self.db_manager.loadState()
@@ -109,6 +109,9 @@ class SGBD:
 
     def processQuitCommand(self) -> None:
         # Sauvegarder l'état avant de quitter
+        for relation in self.db_manager.dropped_data:
+            relation.desallocAllPagesOfRelation()
+
         self.buffer_manager.FlushBuffers()
         self.disk_manager.SaveState()
         self.db_manager.saveState()

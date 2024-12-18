@@ -1,7 +1,7 @@
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 from DBconfig import DBconfig
-from src.core.DBManager import DBManager
+from DBManager import DBManager
 import os
 from pathlib import Path
 
