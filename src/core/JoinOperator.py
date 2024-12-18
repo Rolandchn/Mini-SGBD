@@ -74,13 +74,16 @@ class PageOrientedJoinOperator:
                         # If no conditions, do a Cartesian product
                         if not self.conditions:
                             self.result.append(combined_record)
+                            print(1)
                         else:
+                            print(self.conditions)
                             # Check if ALL conditions are met
                             if all(
                                 condition.evaluate(
                                     combined_record,
                                     combined_columns
                                 )
+                                
                                 for condition in self.conditions
                             ):
                                 # Combine records if conditions are satisfied

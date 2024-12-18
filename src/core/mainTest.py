@@ -70,9 +70,12 @@ if __name__ == "__main__":
     r2_1 = Record(["Pomme", 6.5])
     r2_2 = Record(["Orange", 6])
     r2_3 = Record(["Banane", 5.32])
+    r2_4 = Record(["raisin", 30])
+
     relation2.InsertRecord(r2_1)
     relation2.InsertRecord(r2_2)
     relation2.InsertRecord(r2_3)
+    relation2.InsertRecord(r2_4)
 
     ## Record & DataPage
     # Ecriture
@@ -96,7 +99,7 @@ if __name__ == "__main__":
     relation1.InsertRecord(r1_1)
     relation1.InsertRecord(r1_4)
     pg = PageDirectoryIterator(relation1)
-    Condition1 = Condition('T1.prix','T2.age','>')
+    Condition1 = Condition('T1.prix','<','T2.age')
     PageOrientedJoin = PageOrientedJoinOperator(relation1, relation2,[], buffManager)
     l = PageOrientedJoin.perform_join()
     for i in l:
