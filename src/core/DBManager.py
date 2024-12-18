@@ -63,12 +63,15 @@ class DBManager:
 
     # Supprimer une table de la BDD courante (Active)
     def removeTableFromCurrentDatabase(self, table_name: str) -> bool:
+        """
+        Opération: Supprime une table donnée de la database courrante
+        Sortie: True si la table existe dans la database courrante, False sinon
+        """
         if self.current_database:
             # Stock toutes les tables d'une database
             self.dropped_data.append(self.databases[self.current_database].tables[table_name])
 
-            self.databases[self.current_database].removeTable(table_name)
-            return True
+            return self.databases[self.current_database].removeTable(table_name)
        
         print("Aucune base de données active")
         return False
@@ -76,6 +79,10 @@ class DBManager:
 
     # Supprimer la BDD
     def removeDatabase(self, name: str) -> bool:
+        """
+        Opération: Supprime la database donnée
+        Sortie: True si la database donnée existe, False sinon
+        """
         if name in self.databases:
             # Stock toutes les tables d'une database
             for table in self.databases[name].tables.values():
@@ -94,6 +101,10 @@ class DBManager:
 
     # Supprimer toutes les tables de la BDD courante (Active)
     def removeTablesFromCurrentDatabase(self) -> bool:
+        """
+        Opération: Supprime les tables de la databases courrante
+        Sortie: True si il y a une database courante, False sinon
+        """
         if self.current_database:
             # Stock toutes les tables d'une database
             for table in self.databases[self.current_database].tables.values():
@@ -108,13 +119,22 @@ class DBManager:
 
     # Supprimer toutes les BDD
     def removeDatabases(self) -> bool:
-        for database in self.databases.values():
-            for table in database.tables.values():
-                self.dropped_data.append(table)
+        """
+        Opération: Supprime les tables de toutes les databases 
+        Sortie: True si la database est pleine, False si la database est vide
+        """
+        if self.databases != False:
+            for database in self.databases.values():
+                for table in database.tables.values():
+                    self.dropped_data.append(table)
 
-        self.databases.clear()
-        self.current_database = None
-        return True
+            self.databases.clear()
+            self.current_database = None
+            
+            return True
+        
+        print("Aucune base de données active")
+        return False
 
 
     # Retourne la liste des BDD

@@ -18,18 +18,25 @@ class Database:
         else:
             raise TypeError("L'objet ajouté doit être une instance de Relation")
 
+
     #Suppresson de table dans le dictionnaire
-    def removeTable(self, table_name: str):
+    def removeTable(self, table_name: str) -> bool:
         if table_name in self.tables:
             del self.tables[table_name]
-    
+
+            return True
+        return False
+
+
     #Trouver une table(Relation) selon le nom
     def getTable(self, table_name: str) -> Optional[Relation]:
         return self.tables.get(table_name)
 
+
     #Retourner tous les tables
     def listTables(self) -> List[str]:
         return list(self.tables.keys())
+    
     
     def saveRelation(self, relation: 'Relation'):
         """
