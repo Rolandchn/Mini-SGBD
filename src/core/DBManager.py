@@ -10,6 +10,7 @@ from BufferManager import BufferManager
 
 class DBManager:
     def __init__(self, db_config):
+        self.dropped_data = {}
         self.databases = {}  # Dictionnaire pour stocker les bases de données
         self.current_database = None  # Variable pour stocker la base de données active
         self.db_config = db_config
