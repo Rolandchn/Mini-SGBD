@@ -2,17 +2,7 @@
 # ignore test file
 test.py
 
-# ignore test save
-storage/
 
-!storage/database/role
-!storage/datafiles/role
-
-
-# ignore config test buffer save
-src/config
-
-!src/config/DBconfig.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
