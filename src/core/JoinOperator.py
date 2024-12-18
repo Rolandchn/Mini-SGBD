@@ -14,6 +14,33 @@ class PageOrientedJoinOperator:
         self.result = []
 
     def perform_join(self):
+        pd1 = PageDirectoryIterator(self.relation1)
+        pd2 = PageDirectoryIterator(self.relation2)
+
+        combined_columns = [
+            [ColumnInfo(f"T1.{col.name}", col.type) for col in self.relation1.columns] +
+            [ColumnInfo(f"T2.{col.name}", col.type) for col in self.relation2.columns]
+        ]
+
+        relation1_index_targetColumn = 0 
+        relation2_index_targetColumn = 0 
+
+        while dataPage1 := pd1.GetNextDataPageId():
+            while dataPage2 := pd2.GetNextDataPageId():
+                dp1 = DataPageHoldRecordIterator(dataPage1, self.relation1)
+                dp2 = DataPageHoldRecordIterator(dataPage2, self.relation2)
+            
+                while r_dataPage1 := dp1.GetNextRecord():
+                    while r_dataPage2 := dp2.GetNextRecord():
+                        # opération de théta jointure (=, !=, <, <=, >, ou >=)
+
+                        if r_dataPage1.values[relation1_index_targetColumn] == r_dataPage2.values[relation2_index_targetColumn]:
+                            result_record.append(union_list(r_dataPage1.values, r_dataPage2.values))
+
+                    dp2.Reset()
+            
+            pd2.Reset()
+        
         # Create PageDirectoryIterator for both relations
         r_page_iterator = PageDirectoryIterator(self.relation1)
 
