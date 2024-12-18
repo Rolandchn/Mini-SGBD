@@ -54,7 +54,6 @@ class TestBufferManager(unittest.TestCase):
         buffer.pin_count = 0
         self.buffer_manager.buffers = [buffer]
 
-        # Define the return value for the mock outside the decorator
         mock_buffer = Buffer(size=self.config.pagesize)
         mock_buffer.pageId = pageId
         mock_buffer.pin_count = 1
