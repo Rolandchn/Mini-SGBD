@@ -50,7 +50,8 @@ class PageDirectoryIterator:
 
     def Reset(self):
         self.current_page_id = self.relation.headerPageId
-        self.next_page_id = self.get_next_page_id(self.current_page_id)
+        self.next_page_id = self.get_next_page_id(self.current_page_id, self.relation.bufferManager.getPage(self.relation.headerPageId))
+        self.Close()
 
     def Close(self):
         self.relation.bufferManager.FreePage(self.relation.headerPageId)

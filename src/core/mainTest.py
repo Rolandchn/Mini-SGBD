@@ -14,6 +14,8 @@ from pathlib import Path
 
 from PageDirectoryIterator import PageDirectoryIterator
 from DataPageHoldRecordIterator import DataPageHoldRecordIterator
+from JoinOperator import PageOrientedJoinOperator
+from Condition import Condition
 def afficher_headerPage(relation:Relation):
     buff_headerPage = buffManager.getPage(relation.headerPageId)
     print(buff_headerPage.getByte())
@@ -68,6 +70,9 @@ if __name__ == "__main__":
     r2_1 = Record(["Pomme", 6.5])
     r2_2 = Record(["Orange", 6])
     r2_3 = Record(["Banane", 5.32])
+    relation2.InsertRecord(r2_1)
+    relation2.InsertRecord(r2_2)
+    relation2.InsertRecord(r2_3)
 
     ## Record & DataPage
     # Ecriture
@@ -83,23 +88,18 @@ if __name__ == "__main__":
 
     relation1.InsertRecord(r1_9)
     relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
+    relation1.InsertRecord(r1_1)
     relation1.InsertRecord(r1_4)
 
     relation1.InsertRecord(r1_2)
     relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_3)
+    relation1.InsertRecord(r1_1)
     relation1.InsertRecord(r1_4)
     pg = PageDirectoryIterator(relation1)
-    a = pg.GetNextDataPageId()
-    print(a)
-    Dphr = DataPageHoldRecordIterator(a, relation1)
-    print(Dphr.GetNextRecord().values)
-    print(Dphr.GetNextRecord().values)
-    print(Dphr.GetNextRecord().values)
-    b = pg.GetNextDataPageId()
-    print(b)
-    Dphr = DataPageHoldRecordIterator(b, relation1)
-    print(Dphr.GetNextRecord().values)
-    
+    Condition1 = Condition('T1.prix','T2.age','>')
+    PageOrientedJoin = PageOrientedJoinOperator(relation1, relation2,[], buffManager)
+    l = PageOrientedJoin.perform_join()
+    for i in l:
+        print(i)
+        
     #buffManager.disk.SaveState()

@@ -13,7 +13,7 @@ class PageOrientedJoinOperator(IRecordIterator):
         self.s_iterator_reset = True
         self.joined_records = []
 
-    def GetNextRecord(self) -> Optional[List[Record]]:
+    def GetNextRecord(self) -> Optional[Record]:
         while True:
             if self.current_r_record is None:
                 self.current_r_record = self.r_iterator.GetNextRecord()
@@ -38,6 +38,15 @@ class PageOrientedJoinOperator(IRecordIterator):
                 return result
 
             self.current_r_record = None
+
+    def performJoin(self) -> List[Record]:
+        all_joined_records = []
+        while True:
+            joined_records = self.GetNextRecord()
+            if joined_records is None:
+                break
+            all_joined_records.extend(joined_records)
+        return all_joined_records
 
     def join_records(self, r_record: Record, s_record: Record) -> Record:
         return r_record + s_record
