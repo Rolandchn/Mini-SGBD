@@ -10,8 +10,8 @@ from BufferManager import BufferManager
 
 class DBManager:
     def __init__(self, db_config):
-        self.dropped_data = {}
-        self.databases = {}  # Dictionnaire pour stocker les bases de données
+        self.dropped_data: list[Relation] = [] # Liste qui contient les tables à désallouer
+        self.databases: dict[str, Database] = {}  # Dictionnaire pour stocker les bases de données
         self.current_database = None  # Variable pour stocker la base de données active
         self.db_config = db_config
         self.bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
@@ -64,6 +64,9 @@ class DBManager:
     # Supprimer une table de la BDD courante (Active)
     def removeTableFromCurrentDatabase(self, table_name: str) -> bool:
         if self.current_database:
+            # Stock toutes les tables d'une database
+            self.dropped_data.append(self.databases[self.current_database].tables[table_name])
+
             self.databases[self.current_database].removeTable(table_name)
             return True
        
@@ -74,6 +77,10 @@ class DBManager:
     # Supprimer la BDD
     def removeDatabase(self, name: str) -> bool:
         if name in self.databases:
+            # Stock toutes les tables d'une database
+            for table in self.databases[name].tables.values():
+                self.dropped_data.append(table)
+
             del self.databases[name]
            
             if self.current_database == name:
@@ -88,6 +95,10 @@ class DBManager:
     # Supprimer toutes les tables de la BDD courante (Active)
     def removeTablesFromCurrentDatabase(self) -> bool:
         if self.current_database:
+            # Stock toutes les tables d'une database
+            for table in self.databases[self.current_database].tables.values():
+                self.dropped_data.append(table)
+
             self.databases[self.current_database].tables.clear()
             return True
       
@@ -97,6 +108,10 @@ class DBManager:
 
     # Supprimer toutes les BDD
     def removeDatabases(self) -> bool:
+        for database in self.databases.values():
+            for table in database.tables.values():
+                self.dropped_data.append(table)
+
         self.databases.clear()
         self.current_database = None
         return True

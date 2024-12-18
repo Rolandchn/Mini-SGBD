@@ -109,7 +109,9 @@ class SGBD:
 
     def processQuitCommand(self) -> None:
         # Sauvegarder l'état avant de quitter
-        print(self.db_manager.databases)
+        for relation in self.db_manager.dropped_data:
+            relation.desallocAllPagesOfRelation()
+
         self.buffer_manager.FlushBuffers()
         self.disk_manager.SaveState()
         self.db_manager.saveState()

@@ -7,7 +7,7 @@ import os
 class Database:
     def __init__(self, name: str):
         self.name = name
-        self.tables = {}  # Dictionnaire pour stocker les tables
+        self.tables: dict[str, Relation] = {}  # Dictionnaire pour stocker les tables
         self._unsaved_changes = False
 
 
