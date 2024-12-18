@@ -14,8 +14,6 @@ from pathlib import Path
 
 from PageDirectoryIterator import PageDirectoryIterator
 from DataPageHoldRecordIterator import DataPageHoldRecordIterator
-from JoinOperator import PageOrientedJoinOperator
-from Condition import Condition
 def afficher_headerPage(relation:Relation):
     buff_headerPage = buffManager.getPage(relation.headerPageId)
     print(buff_headerPage.getByte())
@@ -31,6 +29,13 @@ def afficher_headerPage(relation:Relation):
 
     buffManager.FreePage(relation.headerPageId)
 
+def union_list(list1: list, list2: list):
+    result = list1
+
+    for x in list2:
+        result.append(x)
+
+    return result
 
 if __name__ == "__main__":
     ## File path
@@ -42,7 +47,7 @@ if __name__ == "__main__":
 
     ## Relation
     # Relation 1: nom | age | id
-    relation1 = Relation("camarade", 
+    relation1 = Relation("personne", 
                         3, 
                         [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("age", Column.Int()), Column.ColumnInfo("id", Column.Int())],
                         buffManager.disk,
@@ -60,19 +65,16 @@ if __name__ == "__main__":
     r1_8 = Record(["Aisha", 20, 121212])
     r1_9 = Record(["Norn", 20, 654321])
 
-    # Relation 2: nom | prix
-    relation2 = Relation("fruit", 
+    # Relation 2: nom | prime
+    relation2 = Relation("honneur", 
                         2, 
-                        [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("prix", Column.Float())],
+                        [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("prime", Column.Float())],
                         buffManager.disk,
                         buffManager)
-    
-    r2_1 = Record(["Pomme", 6.5])
-    r2_2 = Record(["Orange", 6])
-    r2_3 = Record(["Banane", 5.32])
-    relation2.InsertRecord(r2_1)
-    relation2.InsertRecord(r2_2)
-    relation2.InsertRecord(r2_3)
+
+    r2_1 = Record(["Leo", 20.5])
+    r2_2 = Record(["Hector", 19.5])
+    r2_3 = Record(["Marc", 17.4])
 
     ## Record & DataPage
     # Ecriture
@@ -80,26 +82,62 @@ if __name__ == "__main__":
     relation1.InsertRecord(r1_2)
     relation1.InsertRecord(r1_3)
     relation1.InsertRecord(r1_4)
-
     relation1.InsertRecord(r1_5)
+
     relation1.InsertRecord(r1_6)
     relation1.InsertRecord(r1_7)
     relation1.InsertRecord(r1_8)
-
     relation1.InsertRecord(r1_9)
     relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_1)
+
+    relation1.InsertRecord(r1_3)
     relation1.InsertRecord(r1_4)
 
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_2)
-    relation1.InsertRecord(r1_1)
-    relation1.InsertRecord(r1_4)
-    pg = PageDirectoryIterator(relation1)
-    Condition1 = Condition('T1.prix','T2.age','>')
-    PageOrientedJoin = PageOrientedJoinOperator(relation1, relation2,[], buffManager)
-    l = PageOrientedJoin.perform_join()
-    for i in l:
-        print(i)
+
+    relation2.InsertRecord(r2_1)
+    relation2.InsertRecord(r2_2)
+    relation2.InsertRecord(r2_3)
+
+    pd1 = PageDirectoryIterator(relation1)
+    pd2 = PageDirectoryIterator(relation2)
+
+
+    result_columnInfo = union_list(relation1.columns.copy(), relation2.columns)
+    result_record = []
+
+
+    relation1_index_targetColumn = 0 
+    relation2_index_targetColumn = 0 
+
+    while dataPage1 := pd1.GetNextDataPageId():
+        while dataPage2 := pd2.GetNextDataPageId():
+            dp1 = DataPageHoldRecordIterator(dataPage1, relation1)
+            dp2 = DataPageHoldRecordIterator(dataPage2, relation2)
         
+            while r_dataPage1 := dp1.GetNextRecord():
+                while r_dataPage2 := dp2.GetNextRecord():
+                    # opération de théta jointure (=, !=, <, <=, >, ou >=)
+
+                    if r_dataPage1.values[relation1_index_targetColumn] == r_dataPage2.values[relation2_index_targetColumn]:
+                        result_record.append(union_list(r_dataPage1.values, r_dataPage2.values))
+
+                dp2.Reset()
+        
+        pd2.Reset()
+
+    print(result_record)
+
+
+    """ pg = PageDirectoryIterator(relation1)
+    a = pg.GetNextDataPageId()
+    print(a)
+    Dphr = DataPageHoldRecordIterator(a, relation1)
+    print(Dphr.GetNextRecord().values)
+    print(Dphr.GetNextRecord().values)
+    print(Dphr.GetNextRecord().values)
+    b = pg.GetNextDataPageId()
+    print(b)
+    Dphr = DataPageHoldRecordIterator(b, relation1)
+    print(Dphr.GetNextRecord().values) """
+    
     #buffManager.disk.SaveState()
