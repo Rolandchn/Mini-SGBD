@@ -20,6 +20,9 @@ from RecordPrinter import RecordPrinter
 from SelectOperator import SelectOperator
 from RelationScanner import RelationScanner
 
+import traceback
+import csv
+
 
 class SGBD:
     def __init__(self, db_config: DBconfig):
@@ -290,61 +293,48 @@ class SGBD:
             print("No current database set.")
 
     def processBulkInsertCommand(self, parts: list[str]):
-        print("now i am inside processBulkInsertCommand methode")
+
         if parts[0].upper() != "INTO":
             print("Invalid command.")
             return
 
         table_name = parts[1]
         file_name = parts[2]
-        print("i am before self.db_manager.getTableFromCurrentDatabase(table_name) , i am not sure that line is working ")
+
+        file_name = os.path.join(os.path.dirname(__file__), file_name)
+
+        if not os.path.exists(file_name):
+            print(f"File {file_name} not found. Please check the path.")
+            return
+
         # Récupérer la table de la base de données courante
         table = self.db_manager.getTableFromCurrentDatabase(table_name)
-        print("if this message is printed it means that self.db_manager.getTableFromCurrentDatabase(table_name) works :') yay!!")
         if table is None:
             print(f"Table {table_name} does not exist.")
             return
 
         # Lire le fichier CSV
         try:
-            with open(file_name, 'r') as file:
-                lines = file.readlines()
-        except FileNotFoundError:
-            print(f"File {file_name} not found.")
-            return
+            with open(file_name, 'r') as csvfile:
+                reader = csv.reader(csvfile)
 
-        # Vérifier que chaque ligne du fichier CSV est valide
-        for line in lines:
-            values = line.strip().split(',')
-            if len(values) != table.nb_column:
-                print(f"Invalid CSV line: {line.strip()}. Number of values does not match the number of columns in table {table_name}.")
-                continue
-
-            # Convertir les valeurs en types appropriés
-            typed_values = []
-            for i, value in enumerate(values):
-                column_type = table.columns[i].type
-                if column_type == Column.Int():
-                    try:
-                        typed_values.append(int(value))
-                    except ValueError:
-                        print(f"Invalid integer value: {value} in line: {line.strip()}")
+                # Parcourir chaque ligne du fichier
+                for row in reader:
+                    if len(row) != table.nb_column:
+                        print(f"Invalid CSV line: {row}. Number of values does not match the number of columns in table {table_name}.")
                         continue
-                elif column_type == Column.Float():
-                    try:
-                        typed_values.append(float(value))
-                    except ValueError:
-                        print(f"Invalid float value: {value} in line: {line.strip()}")
-                        continue
-                elif column_type == Column.Char(column_type.size) and len(value) == column_type.size:
-                    typed_values.append(value)
-                elif column_type == Column.VarChar(column_type.size) and len(value) <= column_type.size:
-                    typed_values.append(value)
 
-            # Insérer le tuple dans la table
-            table.insertRecord(typed_values)
+                    # Construire la commande INSERT
+                    values = ", ".join([f"'{value.strip()}'" for value in row])
+                    insert_command = f"INSERT INTO {table_name} VALUES ({values})"
 
-        print(f"All records from {file_name} inserted into table {table_name}.")
+
+                    self.processInsertCommand(insert_command)
+                    
+
+            print(f"All records from {file_name} have been processed and inserted into {table_name}.")
+        except Exception as e:
+            print(f"An error occurred while processing the file: {e}")
 
     def processSelectCommand(self, parts: list[str]) -> None:
         command = " ".join(parts)

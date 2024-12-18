@@ -22,5 +22,50 @@
             "fileIdx": 0,
             "pageIdx": 1
         }
+    },
+    {
+        "name": "S",
+        "nb_columns": 5,
+        "columns": [
+            {
+                "name": "C1",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            },
+            {
+                "name": "C2",
+                "type": {
+                    "type": "Float",
+                    "size": 4
+                }
+            },
+            {
+                "name": "C3",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            },
+            {
+                "name": "C4",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            },
+            {
+                "name": "C5",
+                "type": {
+                    "type": "Int",
+                    "size": 4
+                }
+            }
+        ],
+        "headerPageId": {
+            "fileIdx": 1,
+            "pageIdx": 0
+        }
     }
 ]
