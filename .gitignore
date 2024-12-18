@@ -3,10 +3,9 @@
 test.py
 
 # ignore test save
-storage/
 
-!storage/database/role
-!storage/datafiles/role
+!storage/database/role.txt
+!storage/datafiles/role.txt
 
 
 # ignore config test buffer save
