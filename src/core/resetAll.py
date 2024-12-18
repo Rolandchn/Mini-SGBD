@@ -1,13 +1,12 @@
 from DiskManager import DiskManager
 from BufferManager import BufferManager
 from DBconfig import DBconfig
-from src.core.DBManager import DBManager
+from DBManager import DBManager
 import os
 from pathlib import Path
 
-bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-dbm = DBManager(bufferManager.config) 
-def resetAll():
+@staticmethod
+def resetAll(dbm: DBManager, bufferManager: BufferManager):
     dm = bufferManager.disk
     dm.SaveState()
     dbm.saveState()
@@ -22,10 +21,18 @@ def resetAll():
                 except Exception as e:
                     print(f"Erreur lors de la suppression de {file_path} : {e}")
         
-        print("Tous les fichiers ont été supprimés.")
+        print("La base de données a été réinitialisée.")
     except Exception as e:
         print(f"Erreur lors du traitement du dossier : {e}")
     
     return
 
-resetAll()
+if __name__ == "__main__":
+    ## File path
+    DB_path = os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")
+    db_file_path = Path(__file__).parent / "../../storage/database/test1.json"
+
+    ## Init
+    buffManager = BufferManager.setup(DB_path)
+    dbm = DBManager(buffManager)
+    resetAll(dbm, buffManager)

@@ -20,7 +20,7 @@ from RecordPrinter import RecordPrinter
 from SelectOperator import SelectOperator
 from RelationScanner import RelationScanner
 from JoinOperator import JoinOperator
-
+import resetAll
 class SGBD:
     def __init__(self, db_config: DBconfig):
         self.db_config = db_config
@@ -54,7 +54,8 @@ class SGBD:
                 return
 
             cmd = parts[0].upper()
-            arg1 = parts[1].upper()
+            if len(parts) > 1:
+                arg1 = parts[1].upper()
 
             if cmd == "CREATE":
                 if arg1 == "DATABASE":
@@ -95,7 +96,8 @@ class SGBD:
 
             elif cmd == "SELECT":
                 self.processSelectCommand(parts[1:])
-
+            elif cmd == "RESETDB":
+                resetAll.resetAll(self.db_manager, self.buffer_manager)
             else:
                 print("Unknown command")
 

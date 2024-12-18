@@ -54,5 +54,5 @@ class PageDirectoryIterator:
 
     def Close(self):
         self.relation.bufferManager.FreePage(self.relation.headerPageId)
+        self.relation.bufferManager.FreePage(self.next_page_id)
         
-

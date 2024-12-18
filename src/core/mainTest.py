@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 from PageDirectoryIterator import PageDirectoryIterator
-
+from DataPageHoldRecordIterator import DataPageHoldRecordIterator
 def afficher_headerPage(relation:Relation):
     buff_headerPage = buffManager.getPage(relation.headerPageId)
     print(buff_headerPage.getByte())
@@ -92,7 +92,9 @@ if __name__ == "__main__":
     relation1.InsertRecord(r1_4)
     pg = PageDirectoryIterator(relation1)
     print(len(relation1.GetAllRecords()))
-    print(pg.GetNextDataPageId())
-    print(pg.GetNextDataPageId())
-
+    Dphr = DataPageHoldRecordIterator(pg.GetNextDataPageId(), relation1)
+    print(Dphr.GetNextRecord().values)
+    print(Dphr.GetNextRecord().values)
+    print(Dphr.GetNextRecord().values)
+    
     #buffManager.disk.SaveState()
