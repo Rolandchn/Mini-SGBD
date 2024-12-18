@@ -1,13 +1,13 @@
+import os
+import json
+
 from typing import Optional, List
+
 from Database import Database 
 from Relation import Relation
-import os
-from pathlib import Path
-from DBconfig import DBconfig   
 from BufferManager import BufferManager
-from Column import ColumnInfo
-import Column
-import json
+
+
 class DBManager:
     def __init__(self, db_config):
         self.databases = {}  # Dictionnaire pour stocker les bases de données
@@ -15,65 +15,84 @@ class DBManager:
         self.db_config = db_config
         self.bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
 
+
     # Création d'une base de données
     def createDatabase(self, name: str) -> bool:
         if name not in self.databases:
             self.databases[name] = Database(name)
             return True
+        
         else:
             print(f"La base de données {name} existe déjà")
             return False
+
 
     # Activer une base de données
     def setCurrentDatabase(self, name: str) -> bool:
         if name in self.databases:
             self.current_database = name
             return True
+
         print(f"La base de données {name} n'existe pas")
+
         return False
+
 
     # Ajouter des tuples à la table active
     def addTableToCurrentDatabase(self, table: Relation) -> bool:
         if self.current_database:
             print("table added")
             self.databases[self.current_database].addTable(table)
+       
             return True
+       
         print("Aucune base de données active")
+       
         return False
+
 
     # Retourner une table dans la BDD en cours (Active)
     def getTableFromCurrentDatabase(self, table_name: str) -> Optional[Relation]:
         if self.current_database:
             return self.databases[self.current_database].getTable(table_name)
-        else:
-            print("Aucune base de données active")
-            return None
+        
+        print("Aucune base de données active")
+        return None
+
 
     # Supprimer une table de la BDD courante (Active)
     def removeTableFromCurrentDatabase(self, table_name: str) -> bool:
         if self.current_database:
             self.databases[self.current_database].removeTable(table_name)
             return True
+       
         print("Aucune base de données active")
         return False
+
 
     # Supprimer la BDD
     def removeDatabase(self, name: str) -> bool:
         if name in self.databases:
             del self.databases[name]
+           
             if self.current_database == name:
                 self.current_database = None
+        
             return True
+        
         print(f"La base de données {name} n'existe pas")
         return False
+
 
     # Supprimer toutes les tables de la BDD courante (Active)
     def removeTablesFromCurrentDatabase(self) -> bool:
         if self.current_database:
             self.databases[self.current_database].tables.clear()
             return True
+      
         print("Aucune base de données active")
         return False
+
 
     # Supprimer toutes les BDD
     def removeDatabases(self) -> bool:
@@ -81,16 +100,20 @@ class DBManager:
         self.current_database = None
         return True
 
+
     # Retourne la liste des BDD
     def listDatabases(self) -> List[str]:
         return list(self.databases.keys())
+
 
     # Retourner ma liste des tables de la BDD courante (Active)
     def listTablesInCurrentDatabase(self) -> List[str]:
         if self.current_database:
             return self.databases[self.current_database].listTables()
+
         print("Aucune base de données active")
         return []
+
 
     def deleteDatabase(self, name: str) -> bool:
         """
@@ -98,11 +121,13 @@ class DBManager:
         """
         if name in self.databases:
             del self.databases[name]
+
             print(f"Database {name} removed from dictionary")
             return True
-        else:
-            print(f"La base de données {name} n'existe pas")
-            return False
+
+        print(f"La base de données {name} n'existe pas")
+        return False
+
 
     def saveState(self):
         """
@@ -114,8 +139,10 @@ class DBManager:
             with open(file_path, 'r', encoding="utf-8") as file:
                 try:
                     saved_data = json.load(file)
+
                 except json.JSONDecodeError:
                     saved_data = []
+
         else:
             saved_data = []
 
@@ -133,11 +160,13 @@ class DBManager:
             with open(db_file_path, 'r', encoding="utf-8") as db_file:
                 try:
                     db_data = json.load(db_file)
+
                 except json.JSONDecodeError:
                     db_data = []
 
             # Mettre à jour les relations dans le fichier JSON
             updated_db_data = []
+
             for table_name, table in database.tables.items():
                 table_data = database.saveRelation(table)
                 updated_db_data.append(table_data)
@@ -170,6 +199,7 @@ class DBManager:
         with open(file_path, 'w', encoding="utf-8") as file:
             json.dump(saved_data, file, indent=4, ensure_ascii=False)
 
+
     def removeDatabaseFromSaveFile(self, name: str):
         """
         Supprime une base de données du fichier db.save.json.
@@ -180,8 +210,10 @@ class DBManager:
             with open(file_path, 'r', encoding="utf-8") as file:
                 try:
                     saved_data = json.load(file)
+
                 except json.JSONDecodeError:
                     saved_data = []
+
         else:
             saved_data = []
 
@@ -192,6 +224,7 @@ class DBManager:
         with open(file_path, 'w', encoding="utf-8") as file:
             json.dump(saved_data, file, indent=4, ensure_ascii=False)
 
+
     def deleteDatabaseFile(self, name: str):
         """
         Supprime le fichier JSON correspondant à la base de données.
@@ -201,8 +234,10 @@ class DBManager:
         if os.path.exists(db_file_path):
             os.remove(db_file_path)
             print(f"Fichier {db_file_path} supprimé")
+
         else:
             print(f"Le fichier {db_file_path} n'existe pas")
+
 
     def loadState(self):
         """
@@ -215,9 +250,11 @@ class DBManager:
             with open(main_file_path, 'r', encoding="utf-8") as main_file:
                 try:
                     saved_data = json.load(main_file)
+
                 except json.JSONDecodeError:
                     print(f"Erreur de décodage JSON pour le fichier {main_file_path}")
                     saved_data = []
+
         else:
             print(f"Le fichier {main_file_path} n'existe pas")
             saved_data = []
@@ -230,6 +267,7 @@ class DBManager:
                 with open(db_file_path, 'r', encoding="utf-8") as db_file:
                     try:
                         db_data = json.load(db_file)
+
                     except json.JSONDecodeError:
                         print(f"Erreur de décodage JSON pour le fichier {db_file_path}")
                         db_data = []
@@ -247,11 +285,13 @@ class DBManager:
                     database.tables[table_name] = table
 
                 database.markAsLoaded()
+
             else:
                 print(f"Le fichier {db_file_path} n'existe pas")
 
         # Supprimer les bases de données qui ne sont pas dans l'état sauvegardé
         current_database_names = set(self.databases.keys())
         saved_database_names = set(saved_data)
+
         for db_name in current_database_names - saved_database_names:
             del self.databases[db_name]
