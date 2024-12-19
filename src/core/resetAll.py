@@ -14,6 +14,8 @@ def resetAll(dbm: DBManager, bufferManager: BufferManager):
     try:
         for root, dirs, files in os.walk(directory_path):
             for file in files:
+                if file == "role.txt":
+                    continue
                 file_path = os.path.join(root, file)
                 try:
                     os.remove(file_path)  # Supprimer le fichier
