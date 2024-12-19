@@ -19,8 +19,8 @@ from ProjectOperator import ProjectOperator
 from RecordPrinter import RecordPrinter
 from SelectOperator import SelectOperator
 from RelationScanner import RelationScanner
-
-
+from JoinOperator import PageOrientedJoinOperator
+import resetAll
 class SGBD:
     def __init__(self, db_config: DBconfig):
         self.db_config = db_config
@@ -54,7 +54,8 @@ class SGBD:
                 return
 
             cmd = parts[0].upper()
-            arg1 = parts[1].upper()
+            if len(parts) > 1:
+                arg1 = parts[1].upper()
 
             if cmd == "CREATE":
                 if arg1 == "DATABASE":
@@ -95,7 +96,8 @@ class SGBD:
 
             elif cmd == "SELECT":
                 self.processSelectCommand(parts[1:])
-
+            elif cmd == "RESETDB":
+                resetAll.resetAll(self.db_manager, self.buffer_manager)
             else:
                 print("Unknown command")
 
@@ -321,43 +323,125 @@ class SGBD:
             print("Invalid SELECT command.")
             return
 
-        # Extraire les colonnes et le nom de la table
-        columns_part = parts[0]
-        table_part = parts[2]
-        print(table_part)
+        # Détecte si c'est une jointure (présence d'une virgule)
+        print(parts)
+        suiteParts = ' '.join(parts[2:])
+        parts2temp = suiteParts.split('FROM')
+        parts2 = parts2temp[0].split(',')
+        print("pt : ",parts2)
+        if ',' in suiteParts:
+            print(parts2)
+            print("parts2 : ",parts2[0])
+            print("parts2 : ",parts2[1])
+            parts2[0] = parts2[0].strip()
+            parts2[1] = parts2[1].strip()
+            table1= parts2[0].split(' ')[0]
+            table2= parts2[1].split(' ')[0]
+            table1 = table1.strip()
+            print("table1 : ",table1)
+            print("table2 : ",table2)
+            table1_alias = parts2[0].split(' ')[1].strip()
+            table2_alias = parts2[1].split(' ')[1].strip() if len(parts2) > 1 else None
+            print("table1_alias : ",table1_alias)
+            print("table2_alias : ",table2_alias)
+            if self.db_manager.current_database:
+                relation1 = self.db_manager.getTableFromCurrentDatabase(table1.strip())
+                relation2 = self.db_manager.getTableFromCurrentDatabase(table2.strip())
 
-        table_name = table_part
-        table_alias = parts[3]
+                if not relation1 or not relation2:
+                    print("One or both tables do not exist.")
+                    return
 
-        conditions = self.parseConditions(command)
+                # Parse les conditions
+                conditions = self.parseConditions(command)
+        
+                for condition in conditions:
+                    temp1 = condition.left_term.split(".")
+                    if temp1[0] == table1_alias:
+                        condition.left_term = "T1."+"".join(temp1[1])
+                    else:
+                        condition.left_term = "T2."+"".join(temp1[1])
+                    temp2 = condition.right_term.split(".")
+                    if temp2[0] == table2_alias:
+                        condition.right_term = "T2."+"".join(temp2[1])
+                    else:
+                        condition.right_term = "T1."+"".join(temp2[1])
+                    
+                    
 
-        if self.db_manager.current_database:
-            if table := self.db_manager.getTableFromCurrentDatabase(table_name):
-                relation_scanner = RelationScanner(table)
-                select_operator = SelectOperator(relation_scanner, 
-                                                                [Condition(c.left_term, c.operator, c.right_term, table_alias) 
-                                                                for c in conditions], 
-                                                                table)
-                # Remplacer les alias de colonne par les noms de colonne réels
-                if table_alias:
-                    columns = [f"{table_alias}.{col}" if '.' not in col else col for col in columns_part.split(",")]
-               
+                # Crée un opérateur de jointure
+                join_operator = PageOrientedJoinOperator(
+                    relation1, 
+                    relation2, 
+                    conditions, 
+                    self.buffer_manager)
+
+                # Prépare les colonnes pour la projection
+                columns_part = parts[0]
+                
+                if columns_part == '*':
+                    # Génère toutes les colonnes des deux tables
+                    columns = [
+                        f"{table1_alias}.{col.name}" for col in relation1.columns
+                    ] + [
+                        f"{table2_alias}.{col.name}" for col in relation2.columns
+                    ]
                 else:
-                    columns = columns_part.split(",")
+                    columns = columns_part.split(',')
 
-                if columns[0] == '*' or columns[0] == table_alias+'.*':
-                    columns = [f"{table_alias}.{col.name}" if table_alias else col.name for col in table.columns]
+                # Crée un opérateur de projection
+                project_operator = ProjectOperator(
+                    join_operator, 
+                    columns, 
+                    Relation(
+                        name="joined_relation", 
+                        nb_column=len(relation1.columns) + len(relation2.columns),
+                        columns=relation1.columns + relation2.columns,
+                        disk=self.disk_manager,
+                        bufferManager=self.buffer_manager
+                    ), 
+                    table_alias={table1: table1_alias, table2: table2_alias}  # Passer un dictionnaire d'alias
+                )
 
-                project_operator = ProjectOperator(select_operator, columns, table, table_alias)
-                printer = RecordPrinter(project_operator)
+                # Imprime les records
+                printer = Recorprinter = RecordPrinter(project_operator)
                 printer.print_records()
-            
-            else:
-                print(f"Table {table_name} does not exist.")
-       
-        else:
-            print("No current database set.")
 
+        else:
+            # Commande SELECT mono-table
+            columns_part = parts[0]
+            table_part = parts[2]
+            table_name = table_part
+            table_alias = parts[3] if len(parts) > 3 else None
+
+            conditions = self.parseConditions(command)
+
+            if self.db_manager.current_database:
+                if table := self.db_manager.getTableFromCurrentDatabase(table_name):
+                    relation_scanner = RelationScanner(table)
+                    select_operator = SelectOperator(relation_scanner, 
+                                                    [Condition(c.left_term, c.operator, c.right_term, table_alias) 
+                                                    for c in conditions], 
+                                                    table)
+                    
+                    # Gestion des colonnes
+                    if table_alias:
+                        columns = [f"{table_alias}.{col}" if '.' not in col else col for col in columns_part.split(",")]
+                    else:
+                        columns = columns_part.split(",")
+
+                    if columns[0] == '*' or (table_alias and columns[0] == table_alias+'.*'):
+                        columns = [f"{table_alias}.{col.name}" if table_alias else col.name for col in table.columns]
+
+                    project_operator = ProjectOperator(select_operator, columns, table, table_alias)
+                    printer = RecordPrinter(project_operator)
+                    printer.print_records()
+                
+                else:
+                    print(f"Table {table_name} does not exist.")
+        
+            else:
+                print("No current database set.")
 
     @staticmethod
     def parseConditions(command: str) -> List[Condition]:
