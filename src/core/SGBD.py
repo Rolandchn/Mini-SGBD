@@ -102,7 +102,7 @@ class SGBD:
                 print("Unknown command")
 
         except IndexError as I:
-            print("Arguments insufficient for command.", I)
+            print("La commande ne s'est pas exécutée", I)
             traceback.print_exc()
 
         except Exception as e:
