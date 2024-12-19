@@ -16,7 +16,7 @@ class Condition:
                 left_term = parts[0].strip()
                 right_term = parts[1].strip()
                 return Condition(left_term, op, right_term)
-        
+
         raise ValueError(f"No valid operator found in condition: {condition_str}")
 
     @staticmethod
@@ -25,6 +25,14 @@ class Condition:
             if op in condition_str:
                 return op
         raise ValueError(f"Invalid operator in condition: {condition_str}")
+
+    @staticmethod
+    def is_number(s: str) -> bool:
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
 
     def evaluate(self, record: 'Record', columns: List[Column.ColumnInfo]) -> bool:
         try:
@@ -38,43 +46,47 @@ class Condition:
 
             if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
                 return self.compare_numbers(float(left_value), float(right_value))
-            
+
             if isinstance(left_value, str) and isinstance(right_value, str):
                 return self.compare_strings(left_value, right_value)
-            
+
             if self.operator == '<>':
                 return left_value != right_value
-            
+
             return False
 
         except Exception as e:
             print(f"Condition evaluation error: {e}")
             return False
+
     def get_value(self, term: Any, record: 'Record', columns: List[Column.ColumnInfo], table_alias: Optional[str] = None) -> Any:
         if isinstance(term, str):
             if '.' in term:
                 # Split the term into alias and column name
                 parts = term.split('.')
-                
-                if table_alias and parts[0] != table_alias:
-                    raise ValueError(f"Table alias mismatch. Expected {table_alias}, got {parts[0]}")
-                
-                # Find the column by name
-                col_index = next((i for i, col in enumerate(columns) if col.name == parts[1]), None)
-                if col_index is not None:
-                    return record.values[col_index]
-            
+
+                # Check if the part before the dot is a number
+                if not Condition.is_number(parts[0]):
+                    if table_alias and parts[0] != table_alias:
+                        raise ValueError(f"Table alias mismatch. Expected {table_alias}, got {parts[0]}")
+
+                    # Find the column by name
+                    col_index = next((i for i, col in enumerate(columns) if col.name == parts[1]), None)
+                    if col_index is not None:
+                        return record.values[col_index]
+
             # If no dot or alias matching failed, try to find the column by name
             col_index = next((i for i, col in enumerate(columns) if col.name == term), None)
             if col_index is not None:
                 return record.values[col_index]
-            
+
             try:
                 return int(term) if term.isdigit() else float(term)
             except ValueError:
                 return term
 
         return term
+
     def compare_strings(self, left: str, right: str) -> bool:
         # Remove quotes from the strings
         left = left.strip('"\'')
@@ -94,6 +106,7 @@ class Condition:
             return left != right
         else:
             raise ValueError(f"Invalid operator: {self.operator}")
+
     def compare_numbers(self, left: Any, right: Any) -> bool:
         if self.operator == '=':
             return left == right

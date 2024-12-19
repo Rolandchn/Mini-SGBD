@@ -28,7 +28,6 @@ def resetAll(dbm: DBManager, bufferManager: BufferManager):
     return
 
 if __name__ == "__main__":
-    ## File path
     DB_path = os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")
     db_file_path = Path(__file__).parent / "../../storage/database/test1.json"
 
