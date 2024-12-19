@@ -61,15 +61,15 @@ if __name__ == "__main__":
     r1_9 = Record(["Norn", 20, 654321])
 
     # Relation 2: nom | prix
-    relation2 = Relation("fruit", 
+    relation2 = Relation("personne", 
                         2, 
-                        [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("prix", Column.Float())],
+                        [Column.ColumnInfo("nom", Column.VarChar(10)), Column.ColumnInfo("age", Column.Int())],
                         buffManager.disk,
                         buffManager)
     
-    r2_1 = Record(["Pomme", 6.5])
-    r2_2 = Record(["Orange", 6])
-    r2_3 = Record(["Banane", 5.32])
+    r2_1 = Record(["Pomme", 24])
+    r2_2 = Record(["Orange", 26])
+    r2_3 = Record(["Banane", 12])
     r2_4 = Record(["raisin", 30])
 
     relation2.InsertRecord(r2_1)
@@ -99,8 +99,9 @@ if __name__ == "__main__":
     relation1.InsertRecord(r1_1)
     relation1.InsertRecord(r1_4)
     pg = PageDirectoryIterator(relation1)
-    Condition1 = Condition('T1.prix','<','T2.age')
-    PageOrientedJoin = PageOrientedJoinOperator(relation1, relation2,[], buffManager)
+    Condition1 = Condition('T1.age','=','T2.age')
+    print(Condition1.evaluate(r1_1,relation1.columns))
+    PageOrientedJoin = PageOrientedJoinOperator(relation2, relation1,[Condition1], buffManager)
     l = PageOrientedJoin.perform_join()
     for i in l:
         print(i)

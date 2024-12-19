@@ -19,7 +19,7 @@ from ProjectOperator import ProjectOperator
 from RecordPrinter import RecordPrinter
 from SelectOperator import SelectOperator
 from RelationScanner import RelationScanner
-from JoinOperator import JoinOperator
+from JoinOperator import PageOrientedJoinOperator
 import resetAll
 class SGBD:
     def __init__(self, db_config: DBconfig):
@@ -351,15 +351,27 @@ class SGBD:
 
                 # Parse les conditions
                 conditions = self.parseConditions(command)
+        
+                for condition in conditions:
+                    temp1 = condition.left_term.split(".")
+                    if temp1[0] == table1_alias:
+                        condition.left_term = "T1."+"".join(temp1[1])
+                    else:
+                        condition.left_term = "T2."+"".join(temp1[1])
+                    temp2 = condition.right_term.split(".")
+                    if temp2[0] == table2_alias:
+                        condition.right_term = "T2."+"".join(temp2[1])
+                    else:
+                        condition.right_term = "T1."+"".join(temp2[1])
+                    
+                    
 
                 # Crée un opérateur de jointure
-                join_operator = JoinOperator(
+                join_operator = PageOrientedJoinOperator(
                     relation1, 
                     relation2, 
                     conditions, 
-                    self.buffer_manager, 
-                    self.disk_manager
-                )
+                    self.buffer_manager)
 
                 # Prépare les colonnes pour la projection
                 columns_part = parts[0]
@@ -385,7 +397,7 @@ class SGBD:
                         disk=self.disk_manager,
                         bufferManager=self.buffer_manager
                     ), 
-                    table_alias=None  # Pas d'alias global car on a des alias spécifiques
+                    table_alias={table1: table1_alias, table2: table2_alias}  # Passer un dictionnaire d'alias
                 )
 
                 # Imprime les records
@@ -393,7 +405,7 @@ class SGBD:
                 printer.print_records()
 
         else:
-            # Commande SELECT mono-table classique (existante)
+            # Commande SELECT mono-table
             columns_part = parts[0]
             table_part = parts[2]
             table_name = table_part

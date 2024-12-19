@@ -4,14 +4,37 @@ from BufferManager import BufferManager
 from Relation import Relation
 from Condition import Condition
 from Column import ColumnInfo
+from Record import Record
+from IRecordIterator import IRecordIterator
 
-class PageOrientedJoinOperator:
+class PageOrientedJoinOperator(IRecordIterator):
     def __init__(self, relation1: Relation, relation2: Relation, conditions: list[Condition], buffer_manager: BufferManager):
         self.relation1 = relation1
         self.relation2 = relation2
         self.conditions = conditions
         self.buffer_manager = buffer_manager
         self.result = []
+        self.current_index = 0
+        self.has_performed_join = False
+
+    def GetNextRecord(self) -> Record:
+        if not self.has_performed_join:
+            self.perform_join()
+            self.has_performed_join = True
+
+        if self.current_index < len(self.result):
+            record = Record(self.result[self.current_index])
+            self.current_index += 1
+            return record
+        return None
+
+    def Reset(self):
+        self.current_index = 0
+        self.has_performed_join = False
+        self.result = []
+
+    def Close(self):
+        self.Reset()
 
     def perform_join(self):
         # Create PageDirectoryIterator for both relations
@@ -30,9 +53,6 @@ class PageOrientedJoinOperator:
                 self.relation1
             )
 
-            # Reset S page iterator to start from the first page
-            s_page_iterator = PageDirectoryIterator(self.relation2)
-
             # Iterate through all records in current R page
             while True:
                 r_record = r_record_iterator.GetNextRecord()
@@ -40,7 +60,7 @@ class PageOrientedJoinOperator:
                     break
 
                 # Reset S page iterator to start from the first page
-                s_page_iterator.Reset()
+                s_page_iterator = PageDirectoryIterator(self.relation2)
 
                 # Iterate through all pages of relation S
                 while True:
@@ -63,7 +83,7 @@ class PageOrientedJoinOperator:
                             break
 
                         # Combine records for condition evaluation
-                        combined_record = s_record.values + r_record.values
+                        combined_record = r_record.values + s_record.values
 
                         # Prepare column list for condition evaluation
                         combined_columns = (
@@ -74,26 +94,29 @@ class PageOrientedJoinOperator:
                         # If no conditions, do a Cartesian product
                         if not self.conditions:
                             self.result.append(combined_record)
-                            print(1)
                         else:
-                            print(self.conditions)
+                            combined_record_inst = Record(combined_record)
                             # Check if ALL conditions are met
                             if all(
                                 condition.evaluate(
-                                    combined_record,
+                                    combined_record_inst,
                                     combined_columns
                                 )
-                                
                                 for condition in self.conditions
                             ):
-                                # Combine records if conditions are satisfied
                                 self.result.append(combined_record)
 
                     # Free S page buffer after processing all its records
                     self.buffer_manager.FreePage(s_page_id)
 
-                # Free R page buffer after processing all S pages
-                self.buffer_manager.FreePage(r_page_id)
+            # Free R page buffer after processing all S pages
+            self.buffer_manager.FreePage(r_page_id)
 
-        print(f"Total records={len(self.result)}")
+        return self.result  # Return the result for backward compatibility
+
+    def get_all_results(self):
+        """Method to get all results at once, for backward compatibility"""
+        if not self.has_performed_join:
+            self.perform_join()
+            self.has_performed_join = True
         return self.result
