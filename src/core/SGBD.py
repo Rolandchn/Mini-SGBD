@@ -351,8 +351,6 @@ class SGBD:
 
                 # Parcourir chaque ligne du fichier
                 for row in reader:
-                    print(row)
-                    print(table.nb_column)
                     if len(row) != table.nb_column:
                         print(f"Invalid CSV line: {row}. Number of values does not match the number of columns in table {table_name}.")
                         continue
@@ -360,7 +358,6 @@ class SGBD:
                     # Construire la commande INSERT
                     values = ",".join([f"'{value.strip()}'" for value in row])
                     insert_command = f"INSERT INTO {table_name} VALUES ({values})"
-                    print(insert_command)
 
                     self.processInsertCommand(insert_command)
                     
