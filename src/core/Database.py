@@ -30,6 +30,13 @@ class Database:
     #Retourner tous les tables
     def listTables(self) -> List[str]:
         return list(self.tables.keys())
+
+    def listColumnInfo(self):
+        result = []
+        for relation in self.tables.values():
+            result.append(relation.columns)
+
+        return result
     
     def saveRelation(self, relation: 'Relation'):
         """

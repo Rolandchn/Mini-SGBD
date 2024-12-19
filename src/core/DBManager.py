@@ -114,6 +114,12 @@ class DBManager:
         print("Aucune base de données active")
         return []
 
+    def listColumnInfoInCurrentDatabase(self):
+        if self.current_database:
+            return self.databases[self.current_database].listColumnInfo()
+        print("Aucune base de données active")
+        return []
+
 
     def deleteDatabase(self, name: str) -> bool:
         """

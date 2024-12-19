@@ -200,12 +200,14 @@ class SGBD:
 
     def processListTablesCommand(self) -> None:
         tables = self.db_manager.listTablesInCurrentDatabase()
-
+        columns = self.db_manager.listColumnInfoInCurrentDatabase()
+        
         if tables:
             print("Tables in the current database:")
 
-            for table in tables:
+            for table, column in zip(tables, columns):
                 print(table)
+                print(column) 
 
         else:
             print("No tables found in the current database.")
@@ -232,6 +234,9 @@ class SGBD:
             elif type_str.startswith("VARCHAR("):
                 size = int(type_str[8:-1])
                 columns.append(ColumnInfo(name, Column.VarChar(size)))
+            else:
+                return []
+               
 
         return columns
     
@@ -342,12 +347,14 @@ class SGBD:
 
                 # Parcourir chaque ligne du fichier
                 for row in reader:
+                    print(row)
+                    print(table.nb_column)
                     if len(row) != table.nb_column:
                         print(f"Invalid CSV line: {row}. Number of values does not match the number of columns in table {table_name}.")
                         continue
-
+ 
                     # Construire la commande INSERT
-                    values = ", ".join([f"'{value.strip()}'" for value in row])
+                    values = ",".join([f"'{value.strip()}'" for value in row])
                     insert_command = f"INSERT INTO {table_name} VALUES ({values})"
 
 
@@ -357,6 +364,7 @@ class SGBD:
             print(f"All records from {file_name} have been processed and inserted into {table_name}.")
         except Exception as e:
             print(f"An error occurred while processing the file: {e}")
+            traceback.print_exc()
 
     def processSelectCommand(self, parts: list[str]) -> None:
         command = " ".join(parts)
@@ -368,7 +376,6 @@ class SGBD:
         # Extraire les colonnes et le nom de la table
         columns_part = parts[0]
         table_part = parts[2]
-        print(table_part)
 
         table_name = table_part
         table_alias = parts[3]
