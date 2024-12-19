@@ -19,6 +19,9 @@ from ProjectOperator import ProjectOperator
 from RecordPrinter import RecordPrinter
 from SelectOperator import SelectOperator
 from RelationScanner import RelationScanner
+
+import traceback
+import csv
 from JoinOperator import PageOrientedJoinOperator
 import resetAll
 class SGBD:
@@ -202,12 +205,14 @@ class SGBD:
 
     def processListTablesCommand(self) -> None:
         tables = self.db_manager.listTablesInCurrentDatabase()
-
+        columns = self.db_manager.listColumnInfoInCurrentDatabase()
+        
         if tables:
             print("Tables in the current database:")
 
-            for table in tables:
+            for table, column in zip(tables, columns):
                 print(table)
+                print(column) 
 
         else:
             print("No tables found in the current database.")
@@ -234,6 +239,9 @@ class SGBD:
             elif type_str.startswith("VARCHAR("):
                 size = int(type_str[8:-1])
                 columns.append(ColumnInfo(name, Column.VarChar(size)))
+            else:
+                return []
+               
 
         return columns
     
@@ -315,6 +323,53 @@ class SGBD:
 
         else:
             print("No current database set.")
+
+    def processBulkInsertCommand(self, parts: list[str]):
+
+        if parts[0].upper() != "INTO":
+            print("Invalid command.")
+            return
+
+        table_name = parts[1]
+        file_name = parts[2]
+
+        file_name = os.path.join(os.path.dirname(__file__), file_name)
+
+        if not os.path.exists(file_name):
+            print(f"File {file_name} not found. Please check the path.")
+            return
+
+        # Récupérer la table de la base de données courante
+        table = self.db_manager.getTableFromCurrentDatabase(table_name)
+        if table is None:
+            print(f"Table {table_name} does not exist.")
+            return
+
+        # Lire le fichier CSV
+        try:
+            with open(file_name, 'r') as csvfile:
+                reader = csv.reader(csvfile)
+
+                # Parcourir chaque ligne du fichier
+                for row in reader:
+                    print(row)
+                    print(table.nb_column)
+                    if len(row) != table.nb_column:
+                        print(f"Invalid CSV line: {row}. Number of values does not match the number of columns in table {table_name}.")
+                        continue
+ 
+                    # Construire la commande INSERT
+                    values = ",".join([f"'{value.strip()}'" for value in row])
+                    insert_command = f"INSERT INTO {table_name} VALUES ({values})"
+
+
+                    self.processInsertCommand(insert_command)
+                    
+
+            print(f"All records from {file_name} have been processed and inserted into {table_name}.")
+        except Exception as e:
+            print(f"An error occurred while processing the file: {e}")
+            traceback.print_exc()
 
     def processSelectCommand(self, parts: list[str]) -> None:
         command = " ".join(parts)

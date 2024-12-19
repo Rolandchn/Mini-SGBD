@@ -314,7 +314,6 @@ class Relation:
         self.bufferManager.FreePage(dataPageId)
 
         self.updateHeaderPage(dataPageId, tailleRecord)
-        
         return recordId
     
 
