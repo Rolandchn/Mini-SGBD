@@ -15,14 +15,11 @@ class PageDirectoryIterator:
         if current_page_id == self.relation.headerPageId:
             buffer.set_position(0)
             nb = buffer.read_int()
-            print("nb cas1 :", nb)
             if nb == 0:
                 return None
             fidx = buffer.read_int()
             pidx = buffer.read_int()
             buffer.set_position(buffer.getPos() + 4)
-            print("fidx 1:", fidx)
-            print("pidx 1:", pidx)
             return PageId(fidx, pidx)
         else:
             buffer.set_position(0)
@@ -53,7 +50,9 @@ class PageDirectoryIterator:
 
     def Reset(self):
         self.current_page_id = self.relation.headerPageId
-        self.next_page_id = self.get_next_page_id(self.current_page_id)
+        self.next_page_id = self.get_next_page_id(self.current_page_id, self.relation.bufferManager.getPage(self.relation.headerPageId))
+        self.Close()
 
     def Close(self):
         self.relation.bufferManager.FreePage(self.relation.headerPageId)
+        
