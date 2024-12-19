@@ -12,6 +12,10 @@ class Int:
 
     def to_dict(self):
         return {"type": "Int", "size": self.size}
+    
+    def __str__(self):
+        return "INT"
+    
 
 @dataclass
 class Float:
@@ -19,6 +23,10 @@ class Float:
 
     def to_dict(self):
         return {"type": "Float", "size": self.size}
+    
+    def __str__(self):
+        return "REAL"
+    
 
 @dataclass
 class Char:
@@ -26,6 +34,10 @@ class Char:
 
     def to_dict(self):
         return {"type": "Char", "size": self.size}
+    
+    def __str__(self):
+        return f"CHAR({self.size})"
+    
 
 @dataclass
 class VarChar:
@@ -33,6 +45,10 @@ class VarChar:
 
     def to_dict(self):
         return {"type": "VarChar", "size": self.size}
+    
+    def __str__(self):
+        return f"VARCHAR({self.size})"
+    
 
 @dataclass
 class ColumnInfo(Base):
