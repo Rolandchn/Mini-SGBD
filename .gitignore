@@ -1,4 +1,6 @@
 
+# ignore test.py
+test.py
 
 # ignore test save
 storage/
