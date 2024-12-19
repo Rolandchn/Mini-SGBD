@@ -100,7 +100,7 @@ class SGBD:
             elif cmd == "SELECT":
                 self.processSelectCommand(parts[1:])
             elif cmd == "RESETDB":
-                resetAll.resetAll(self.db_manager, self.buffer_manager)
+                resetAll.resetAll(DBManager(self.buffer_manager.config,self.buffer_manager), self.buffer_manager)
             else:
                 print("Commande non reconnue")
 
