@@ -330,7 +330,7 @@ class SGBD:
 
         table_name = parts[1]
         file_name = parts[2]
-        file_name = os.path.join(os.path.dirname(__file__), file_name)
+        file_name = os.path.join(os.path.dirname(__file__),"..","..", file_name)
 
         if not os.path.exists(file_name):
             print(f"File {file_name} not found. Please check the path.")
