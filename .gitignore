@@ -10,7 +10,6 @@ storage/
 # ignore config test buffer save
 src/config/
 
-!src/config/DBconfig.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
