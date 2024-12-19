@@ -9,6 +9,7 @@ from pathlib import Path
 def resetAll(dbm: DBManager, bufferManager: BufferManager):
     dm = bufferManager.disk
     dm.SaveState()
+    dbm.removeDatabases()
     dbm.saveState()
     directory_path = os.path.join(os.path.dirname(__file__), "..","..","storage", "datafiles")
     try:

@@ -1,5 +1,4 @@
 import os
-import traceback
 
 from typing import List
 
@@ -20,7 +19,6 @@ from RecordPrinter import RecordPrinter
 from SelectOperator import SelectOperator
 from RelationScanner import RelationScanner
 
-import traceback
 import csv
 from JoinOperator import PageOrientedJoinOperator
 import resetAll
@@ -100,7 +98,7 @@ class SGBD:
             elif cmd == "SELECT":
                 self.processSelectCommand(parts[1:])
             elif cmd == "RESETDB":
-                resetAll.resetAll(DBManager(self.buffer_manager.config,self.buffer_manager), self.buffer_manager)
+                resetAll.resetAll(self.db_manager, self.buffer_manager)
             else:
                 print("Commande non reconnue")
 
@@ -363,7 +361,6 @@ class SGBD:
             print(f"All records from {file_name} have been processed and inserted into {table_name}.")
         except Exception as e:
             print(f"An error occurred while processing the file: {e}")
-            traceback.print_exc()
 
     def is_number(self,s: str) -> bool:
         try:
