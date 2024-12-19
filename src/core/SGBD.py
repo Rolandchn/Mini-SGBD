@@ -207,8 +207,7 @@ class SGBD:
             print("Tables in the current database:")
 
             for table, column in zip(tables, columns):
-                print(table)
-                print(column) 
+                print(table, column)
 
         else:
             print("No tables found in the current database.")

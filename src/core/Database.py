@@ -34,7 +34,11 @@ class Database:
     def listColumnInfo(self):
         result = []
         for relation in self.tables.values():
-            result.append(relation.columns)
+            list_buff = []
+            for column in relation.columns:
+                list_buff.append(column.__str__())
+            result.append(list_buff)
+
 
         return result
     

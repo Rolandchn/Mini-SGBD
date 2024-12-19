@@ -60,3 +60,11 @@ class ColumnInfo(Base):
             "name": self.name,
             "type": self.type.to_dict()
         }
+    
+    def __str__(self):
+        return f"{self.name}:{self.type}"
+    
+
+if __name__ == "__main__":
+    a = ColumnInfo("nom", VarChar(10))
+    print(a)
