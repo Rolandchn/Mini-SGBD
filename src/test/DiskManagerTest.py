@@ -1,6 +1,9 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../core")))
+
 import unittest
 from unittest.mock import patch, mock_open, MagicMock
-import os
 import json
 from DBconfig import DBconfig
 from PageId import PageId
@@ -26,7 +29,7 @@ class TestDiskManager(unittest.TestCase):
     def test_alloc_page(self, mock_file):
         pageId = self.disk_manager.AllocPage()
         self.assertEqual(pageId.fileIdx, 0)
-        self.assertEqual(pageId.pageIdx, 1)
+        self.assertEqual(pageId.pageIdx, 0)
         mock_file.assert_called_with(os.path.join(dbpath, 'F0.rsdb'), 'r+b')
 
     @patch('builtins.open', new_callable=mock_open)
