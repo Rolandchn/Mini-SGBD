@@ -236,11 +236,14 @@ class SGBD:
         return columns
     
     
-    def parseValues(self, values_str: str) -> list:
+    def parseValues(self, values_str: str, columns: List[ColumnInfo]) -> list:
         values = []
         value_parts = values_str.split(",")
 
-        for value_part in value_parts:
+        if len(value_parts) != len(columns):
+            raise ValueError(f"Number of values ({len(value_parts)}) does not match number of columns ({len(columns)})")
+
+        for i, (value_part, column_info) in enumerate(zip(value_parts, columns)):
             value_part = value_part.strip()
             
             # Remove quotes from the beginning and end of the string
@@ -250,19 +253,35 @@ class SGBD:
             (value_part.startswith("ʺ") and value_part.endswith("ʺ")):
                 value_part = value_part[1:-1]
             
-            # Convert to appropriate type
-            if value_part.isdigit():
-                values.append(int(value_part))
+            try:
+                if isinstance(column_info.type, Column.Int):
+                    value = int(value_part)
+                    values.append(value)
 
-            elif value_part.replace('.', '', 1).isdigit():
-                values.append(float(value_part))
+                elif isinstance(column_info.type, Column.Float):
+                    value = float(value_part)
+                    values.append(value)
 
-            else:
-                values.append(value_part)
+                elif isinstance(column_info.type, Column.Char):
+                    if len(value_part) > column_info.type.size:
+                        value = value_part[:column_info.type.size]
+                    else:
+                        value = value_part.ljust(column_info.type.size)
+                    values.append(value)
+
+                elif isinstance(column_info.type, Column.VarChar):
+                    #check max size
+                    if len(value_part) > column_info.type.size:
+                        raise ValueError(f"String '{value_part}' exceeds maximum size of {column_info.type.size}")
+                    values.append(value_part)
+
+                else:
+                    raise ValueError(f"Unsupported column type for column {i}")
+
+            except ValueError as e:
+                raise ValueError(f"Invalid value '{value_part}' for column {i}: {str(e)}")
         
         return values
-    
-
     #TP 7 START GO GO GO
     def processInsertCommand(self, command: str):
         parts = command.split()
@@ -271,20 +290,23 @@ class SGBD:
             return
 
         table_name = parts[2]
-        values_str = parts[4][1:-1]
-        typed_values = self.parseValues(values_str)
+        values_str = parts[4][1:-1]  # Remove surrounding parentheses
 
         if self.db_manager.current_database:
             table = self.db_manager.getTableFromCurrentDatabase(table_name)
             if table:
-                record = Record(typed_values)
-                rid = table.InsertRecord(record)
+                try:
+                    typed_values = self.parseValues(values_str, table.columns)
+                    record = Record(typed_values)
+                    rid = table.InsertRecord(record)
 
-                if rid is not None:
-                    print(f"Record inserted with RID: {rid}")
+                    if rid is not None:
+                        print(f"Record inserted with RID: {rid}")
+                    else:
+                        print("Failed to insert record.")
 
-                else:
-                    print("Failed to insert record.")
+                except ValueError as e:
+                    print(f"Insertion error: {e}")
 
             else:
                 print(f"Table {table_name} does not exist.")
