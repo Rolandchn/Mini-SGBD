@@ -65,8 +65,6 @@ class DiskManager:
         return freePageId
 
 
-
-
     def ReadPage(self, pageId:PageId, buffer:Buffer) -> None:
         """ 
         Opération: Lis le buffer  

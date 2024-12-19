@@ -15,20 +15,7 @@ class BufferManager:
 
         self.buffers = [Buffer(size=config.pagesize) for _ in range(config.bm_buffercount)]
 
-        self.CurrentReplacementPolicy = config.bm_policy[0] #LRU default 
-
-
-    @staticmethod
-    def setup(file):
-        # configuration de base
-        config = DBconfig.LoadDBConfig(file)
-        disk = DiskManager(config)
-
-        # class configuration
-        bufferManager = BufferManager(config, disk)
-        bufferManager.SetCurrentReplacementPolicy()
-        
-        return bufferManager 
+        self.SetCurrentReplacementPolicy()
 
 
     def getPage(self, pageId:PageId) -> Buffer:
