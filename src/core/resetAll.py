@@ -28,10 +28,14 @@ def resetAll(dbm: DBManager, bufferManager: BufferManager):
     return
 
 if __name__ == "__main__":
-    DB_path = os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json")
     db_file_path = Path(__file__).parent / "../../storage/database/test1.json"
-
+    db_config = DBconfig.LoadDBConfig(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
+    
+    
     ## Init
-    buffManager = BufferManager.setup(DB_path)
-    dbm = DBManager(buffManager)
-    resetAll(dbm, buffManager)
+    disk_manager = DiskManager(db_config)
+    buffer_manager = BufferManager(db_config, disk_manager)
+    db_manager = DBManager(db_config, buffer_manager)
+    
+    dbm = DBManager(db_config, buffer_manager)
+    resetAll(dbm, buffer_manager)
