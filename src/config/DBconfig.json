@@ -1,8 +1,8 @@
 {
     "dbpath" : "./storage",
-    "pagesize" : "13010",
-    "dm_maxfilesize" : "16700",
-    "bm_buffercount" : "2",
+    "pagesize" : "4096",
+    "dm_maxfilesize" : "12288",
+    "bm_buffercount" : "10",
     "bm_policy" : ["LRU", "MRU"],
     "nb_slots" : 100
 }

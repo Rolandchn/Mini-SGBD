@@ -9,13 +9,13 @@ from BufferManager import BufferManager
 
 
 class DBManager:
-    def __init__(self, db_config):
+    def __init__(self, db_config, bufferManager:BufferManager):
         self.dropped_data: list[Relation] = [] # Liste qui contient les tables à désallouer
         self.databases: dict[str, Database] = {}  # Dictionnaire pour stocker les bases de données
         self.current_database = None  # Variable pour stocker la base de données active
         self.db_config = db_config
-        self.bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
-
+        #self.bufferManager = BufferManager.setup(os.path.join(os.path.dirname(__file__), "..", "config", "DBconfig.json"))
+        self.bufferManager = bufferManager
 
     # Création d'une base de données
     def createDatabase(self, name: str) -> bool:
