@@ -112,8 +112,6 @@ class SGBD:
 
     def processQuitCommand(self) -> None:
         # Sauvegarder l'état avant de quitter
-        print(self.disk_manager.current_pageId)
-        print(self.disk_manager.free_pageIds)
         for relation in self.db_manager.dropped_data:
             relation.desallocAllPagesOfRelation()
 
