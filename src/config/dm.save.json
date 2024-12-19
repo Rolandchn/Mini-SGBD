@@ -1,4 +1,7 @@
 {
-    "last_created_page": null,
+    "last_created_page": {
+        "fileIdx": 5,
+        "pageIdx": 0
+    },
     "free_pageIds": []
 }
